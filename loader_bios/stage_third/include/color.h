@@ -1,0 +1,26 @@
+#pragma once
+#ifndef __COLOR_H
+#define __COLOR_H
+
+#include "typedefs.h"
+
+typedef enum _color_t ENUM_TYPE(uint8_t) {
+	COLOR_BLACK,
+	COLOR_BLUE,
+	COLOR_GREEN,
+	COLOR_CYAN,
+	COLOR_RED,
+	COLOR_MAGENTA,
+	COLOR_BROWN,
+	COLOR_LIGHT_GRAY,
+	COLOR_DARK_GRAY,
+	COLOR_LIGHT_BLUE,
+	COLOR_LIGHT_GREEN,
+	COLOR_LIGHT_CYAN,
+	COLOR_LIGHT_RED,
+	COLOR_LIGHT_MAGENTA,
+	COLOR_YELLOW,
+	COLOR_WHITE
+} color_t;
+
+#endif

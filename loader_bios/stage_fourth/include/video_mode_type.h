@@ -1,0 +1,18 @@
+#pragma once
+#ifndef __VIDEO_MODE_TYPE_H
+#define __VIDEO_MODE_TYPE_H
+
+#include "typedefs.h"
+
+typedef enum _video_mode_type_t ENUM_TYPE(uint8_t) {
+	VIDEO_MODE_TYPE_TEXT,
+	VIDEO_MODE_TYPE_CGA,
+	VIDEO_MODE_TYPE_HERCULES,
+	VIDEO_MODE_TYPE_PLANAR,
+	VIDEO_MODE_TYPE_PACKED,
+	VIDEO_MODE_TYPE_NON_CHAIN_4,
+	VIDEO_MODE_TYPE_DIRECT_COLOR,
+	VIDEO_MODE_TYPE_YUV
+} video_mode_type_t;
+
+#endif

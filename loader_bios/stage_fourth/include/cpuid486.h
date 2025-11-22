@@ -1,0 +1,59 @@
+#pragma once
+#ifndef __CPUID486_H
+#define __CPUID486_H
+
+#include "typedefs.h"
+
+typedef enum _cpuid486_feature_t ENUM_TYPE(uint32_t) {
+	CPUID486_FEATURE_FPU =		1 << 0,
+	CPUID486_FEATURE_VME =		1 << 1,
+	CPUID486_FEATURE_DE =		1 << 2,
+	CPUID486_FEATURE_PSE =		1 << 3,
+	CPUID486_FEATURE_TSC =		1 << 4,
+	CPUID486_FEATURE_MSR =		1 << 5,
+	CPUID486_FEATURE_PAE =		1 << 6,
+	CPUID486_FEATURE_MCE =		1 << 7,
+	CPUID486_FEATURE_CX8 =		1 << 8,
+	CPUID486_FEATURE_APIC =		1 << 9,
+	// CPUID486_FEATURE_MTRR =	1 << 10,	// reserved
+	CPUID486_FEATURE_SEP =		1 << 11,
+	CPUID486_FEATURE_MTRR =		1 << 12,
+	CPUID486_FEATURE_PGE =		1 << 13,
+	CPUID486_FEATURE_MCA =		1 << 14,
+	CPUID486_FEATURE_CMOV =		1 << 15,
+	CPUID486_FEATURE_PAT =		1 << 16,
+	CPUID486_FEATURE_PSE36 =	1 << 17,
+	CPUID486_FEATURE_PSN =		1 << 18,
+	CPUID486_FEATURE_CLFSH =	1 << 19,
+	// CPUID486_FEATURE_NX =	1 << 20,	// reserved
+	CPUID486_FEATURE_DS =		1 << 21,
+	CPUID486_FEATURE_ACPI =		1 << 22,
+	CPUID486_FEATURE_MMX =		1 << 23,
+	CPUID486_FEATURE_FXSR =		1 << 24,
+	CPUID486_FEATURE_SSE =		1 << 25,
+	CPUID486_FEATURE_SSE2 =		1 << 26,
+	CPUID486_FEATURE_SS =		1 << 27,
+	CPUID486_FEATURE_HTT =		1 << 28,
+	CPUID486_FEATURE_TM =		1 << 29,
+	CPUID486_FEATURE_IA64 =		1 << 30,
+	CPUID486_FEATURE_PBE =		1 << 31
+} cpuid486_feature_t;
+
+EXTERN_C bool LOADERCALL cpuid486_present(void);
+
+/**
+ * @param leaf EAX
+ * @param sub_leaf ECX
+ */
+void cpuid486(
+	uint32_t leaf,
+	uint32_t sub_leaf,
+	uint32_t* eax,
+	uint32_t* ecx,
+	uint32_t* edx,
+	uint32_t* ebx
+);
+
+uint32_t cpuid486_get_features(void);
+
+#endif
