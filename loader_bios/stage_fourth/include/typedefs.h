@@ -16,6 +16,8 @@
 #define ENUM_TYPE(type)
 #endif
 
+#define ARRAY_LENGTH_VARIABLE		1
+
 #if defined(__GNUC__) || defined(__clang__)
 #define __GNUC_CLANG__
 #define __stdcall					__attribute__((__stdcall__))

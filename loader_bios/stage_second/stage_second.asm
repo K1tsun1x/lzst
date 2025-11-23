@@ -12,10 +12,9 @@ BEGIN:
 	mov sp, BEGIN
 
 	; Load the third stage header
-	mov ax, 0x0201
-	mov cx, 3
-	mov dh, 0
-	mov bx, BUFFER
+	mov ah, 0x42
+	mov dl, [DRIVE]
+	mov si, DISK_ADDRESS_PACKET
 	int 0x13
 	jc .ERROR_FAILED_TO_READ_THIRD_STAGE
 
@@ -25,7 +24,7 @@ BEGIN:
 
 	; Check the size of the bootloader (in sectors)
 	mov eax, [BUFFER + 4]
-	cmp eax, 0x3f
+	cmp eax, 0x7f
 	ja .ERROR_THIRD_STAGE_IS_TOO_LARGE_TO_LOAD
 
 	test al, al
@@ -34,13 +33,16 @@ BEGIN:
 	dec al
 	jz .JUMP_TO_THIRD_STAGE
 
-	mov bx, BUFFER
-	add bx, 512
+	and ax, 0xffff
+	add word [DISK_ADDRESS_PACKET.Offset], 512
+	mov word [DISK_ADDRESS_PACKET.Count], ax
+	inc dword [DISK_ADDRESS_PACKET.LBALow]
+	mov byte [DISK_ADDRESS_PACKET.Size], 16
 
 	; Load the third stage
-	mov ah, 2
-	mov cx, 4
-	mov dh, 0
+	mov ah, 0x42
+	mov dl, [DRIVE]
+	mov si, DISK_ADDRESS_PACKET
 	int 0x13
 	jc .ERROR_FAILED_TO_READ_THIRD_STAGE
 .JUMP_TO_THIRD_STAGE:
@@ -91,6 +93,15 @@ ErrorFailedToReadThirdStage:			db "Error: failed to read third stage", 0
 ErrorInvalidThirdStageHeaderSignature:	db "Error: invalid third stage header signature", 0
 ErrorThirdStageIsTooLargeToLoad:		db "Error: third stage is too large to load", 0
 DRIVE:	db 0
+
+DISK_ADDRESS_PACKET:
+	.Size:				db 16
+	.Reserved:			db 0
+	.Count:				dw 1
+	.Offset:			dw BUFFER
+	.Segment:			dw 0
+	.LBALow:			dd 2
+	.LBAHigh:			dd 0
 
 times 512 - $ + $$ db 0
 END:

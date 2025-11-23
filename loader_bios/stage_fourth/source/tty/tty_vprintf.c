@@ -1,33 +1,15 @@
-#include <min_stdio.h>
+#include <tty.h>
 
-static const char __STR_UNSUPPORTED_ATTRIBUTE_TYPE[] = "[unsupported attribute type]";
-static const char __STR_UNSUPPORTED_ATTRIBUTE[] = "[unsupported attribute]";
-static const char __STR_UNSUPPORTED_FORMAT_TYPE[] = "[unsupported format type]";
-static const char __STR_UNSUPPORTED_RADIX[] = "[unsupported radix]";
-
-static size_t __min_stdio_print_colored_string(const char* s, color_t color) {
-	if (!s) return __min_stdio_print_colored_string("(null)", color);
-
-	size_t res = 0;
-	for (; *s; s++) {
-		put_colored_char(*s, color);
-		++res;
-	}
-
-	return res;
-}
-
-int __cdecl vprintf(const char* s, va_list a) {
-	char buffer[(sizeof(uint64_t) << 3) + 1];
+int tty_vprintf(const char* s, va_list a) {
+	char buffer[(sizeof(uint64_t) << 3) + 2];
 	color_t color = COLOR_LIGHT_GRAY;
 	size_t printed_chars = 0;
-	color_t frg = 0;
-	color_t bkg = 0;
+	color_t frg;
 	for (; *s; s++) {
 		if (*s == '\x1b') {
 			++s;
 			if (*s != '[') {
-				__min_stdio_print_colored_string(__STR_UNSUPPORTED_ATTRIBUTE_TYPE, color);
+				tty_print_string("[unsupported attribute type]", color.r, color.g, color.b);
 				continue;
 			}
 			
@@ -46,11 +28,11 @@ int __cdecl vprintf(const char* s, va_list a) {
 					else if (*s == '6') frg = COLOR_CYAN;
 					else if (*s == '7') frg = COLOR_DARK_GRAY;
 					else {
-						__min_stdio_print_colored_string(__STR_UNSUPPORTED_ATTRIBUTE, color);
+						tty_print_string("[unsupported attribute]", color.r, color.g, color.b);
 						continue;
 					}
 
-					tmp_color = (tmp_color & 0xf0) | frg;
+					tmp_color = frg;
 				}
 				else if (*s == '9') {
 					++s;
@@ -63,12 +45,13 @@ int __cdecl vprintf(const char* s, va_list a) {
 					else if (*s == '6') frg = COLOR_LIGHT_CYAN;
 					else if (*s == '7') frg = COLOR_WHITE;
 					else {
-						__min_stdio_print_colored_string(__STR_UNSUPPORTED_ATTRIBUTE, color);
+						tty_print_string("[unsupported attribute]", color.r, color.g, color.b);
 						continue;
 					}
 
-					tmp_color = (tmp_color & 0xf0) | frg;
+					tmp_color = frg;
 				}
+				/*
 				else if (*s == '4') {
 					++s;
 					if (*s == '0') bkg = COLOR_BLACK;
@@ -80,7 +63,7 @@ int __cdecl vprintf(const char* s, va_list a) {
 					else if (*s == '6') bkg = COLOR_CYAN;
 					else if (*s == '7') bkg = COLOR_DARK_GRAY;
 					else {
-						__min_stdio_print_colored_string(__STR_UNSUPPORTED_ATTRIBUTE, color);
+						tty_print_string("[unsupported attribute]", color.r, color.g, color.b);
 						continue;
 					}
 
@@ -89,7 +72,7 @@ int __cdecl vprintf(const char* s, va_list a) {
 				else if (*s == '1') {
 					++s;
 					if (*s != '0') {
-						__min_stdio_print_colored_string(__STR_UNSUPPORTED_ATTRIBUTE, color);
+						tty_print_string("[unsupported attribute]", color.r, color.g, color.b);
 						continue;
 					}
 
@@ -109,8 +92,9 @@ int __cdecl vprintf(const char* s, va_list a) {
 
 					tmp_color = (bkg << 4) | (tmp_color & 0x0f);
 				}
+				*/
 				else {
-					__min_stdio_print_colored_string(__STR_UNSUPPORTED_ATTRIBUTE, color);
+					tty_print_string("[unsupported attribute]", color.r, color.g, color.b);
 					continue;
 				}
 
@@ -118,7 +102,7 @@ int __cdecl vprintf(const char* s, va_list a) {
 			} while(*s == ';');
 
 			if (*s != 'm') {
-				__min_stdio_print_colored_string(__STR_UNSUPPORTED_ATTRIBUTE_TYPE, color);
+				tty_print_string("[unsupported attribute type]", color.r, color.g, color.b);
 				--s;
 			}
 			else color = tmp_color;
@@ -126,14 +110,14 @@ int __cdecl vprintf(const char* s, va_list a) {
 		}
 		
 		if (*s != '%') {
-			put_colored_char(*s, color);
+			tty_putchar(*s, color.r, color.g, color.b);
 			++printed_chars;
 			continue;
 		}
 
 		s++;
 		if (*s == '%') {
-			put_colored_char('%', color);
+			tty_putchar('%', color.r, color.g, color.b);
 			++printed_chars;
 			continue;
 		}
@@ -154,7 +138,7 @@ int __cdecl vprintf(const char* s, va_list a) {
 				width = (size_t)va_arg(a, unsigned long);
 				++s;
 			}
-			else if (*s < '0' || *s > '9') printf("[missing width]");
+			else if (*s < '0' || *s > '9') tty_print_string("[missing width]", color.r, color.g, color.b);
 			else for (; *s >= '0' && *s <= '9'; ++s) width = width * 10 + (size_t)(*s - '0');
 		}
 
@@ -192,12 +176,12 @@ int __cdecl vprintf(const char* s, va_list a) {
 		}
 		else if (*s == 's') is_string = true;
 		else if (*s == 'c') is_char = true;
-		else __min_stdio_print_colored_string(__STR_UNSUPPORTED_FORMAT_TYPE, color);
+		else tty_print_string("[unsupported format type]", color.r, color.g, color.b);
 		
 		size_t tmp_len = 0;
 		if (is_number) {
 			if (!is_unsigned && signed_number < 0) {
-				put_colored_char('-', color);
+				tty_putchar('-', color.r, color.g, color.b);
 				tmp_len += 1;
 
 				is_unsigned = true;
@@ -206,18 +190,18 @@ int __cdecl vprintf(const char* s, va_list a) {
 
 			if (flag_hash) {
 				if (radix == 16) {
-					__min_stdio_print_colored_string("0x", color);
+					tty_print_string("0x", color.r, color.g, color.b);
 					tmp_len += 2;
 				}
 				else if (radix == 8) {
-					put_colored_char('0', color);
+					tty_putchar('0', color.r, color.g, color.b);
 					tmp_len += 1;
 				}
 				else if (radix == 2) {
-					__min_stdio_print_colored_string("0b", color);
+					tty_print_string("0b", color.r, color.g, color.b);
 					tmp_len += 2;
 				}
-				else if (radix != 10) __min_stdio_print_colored_string(__STR_UNSUPPORTED_RADIX, color);
+				else if (radix != 10) tty_print_string("[unsupported radix]", color.r, color.g, color.b);
 			}
 
 			ultoa(unsigned_number, buffer, radix);
@@ -239,11 +223,11 @@ int __cdecl vprintf(const char* s, va_list a) {
 			if (width_type == WIDTH_TYPE_SPACES) c = ' ';
 			else if (width_type == WIDTH_TYPE_ZEROS) c = '0';
 
-			for (; tmp_len < width; tmp_len++) put_colored_char(c, color);
+			for (; tmp_len < width; tmp_len++) tty_putchar(c, color.r, color.g, color.b);
 		}
 
-		if (is_char) put_colored_char(buffer[0], color);
-		else __min_stdio_print_colored_string(buffer, color);
+		if (is_char) tty_putchar(buffer[0], color.r, color.g, color.b);
+		else tty_print_string(buffer, color.r, color.g, color.b);
 
 		printed_chars += tmp_len;
 	}

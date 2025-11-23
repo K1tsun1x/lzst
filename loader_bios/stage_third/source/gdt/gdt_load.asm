@@ -28,8 +28,7 @@ bits 32
 
 	push dword [.tmp_bootloader_info_ptr]
 	call dword [.tmp_return_address]
-	cli
-	hlt
+	jmp $
 .tmp_return_address:		dd 0
 .tmp_stack_top:				dd 0
 .tmp_bootloader_info_ptr:	dd 0

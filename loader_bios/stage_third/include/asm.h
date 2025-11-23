@@ -265,7 +265,7 @@ static inline void panic_halt(void) {
 	for (;;) {
 #if defined(__GNUC_CLANG__)
 #if defined(__x86_64__) || defined(__i386__)
-		__asm__ volatile("cli; hlt");
+		__asm__ __volatile__("jmp .");
 #else
 		io_wait();
 #endif

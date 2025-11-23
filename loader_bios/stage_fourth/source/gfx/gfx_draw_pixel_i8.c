@@ -12,7 +12,7 @@ void gfx_draw_pixel_i8(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
 	if (x < 0 || y < 0 || x >= (int)vm->width || y >= (int)vm->height) return;
 
 	const size_t offset = y * vm->pitch + x;
-	GFX_BUFFER[offset] = (uint8_t)color_find_nearset_indexed(
+	GFX_BUFFER[offset] = (uint8_t)color_find_nearset_index(
 		r, g, b,
 		GFX_PALETTE_I8,
 		256

@@ -51,7 +51,7 @@ static gdt32_t ALIGNED(16) GDT_FOURTH_STAGE[] = {
 	GDT32_STATIC(
 		0xfffff,
 		0,
-		GDT_ACCESS_READABLE_WRITEABLE | GDT_ACCESS_DIRECTION | GDT_ACCESS_NOT_SYSTEM | GDT_ACCESS_PRESENT,
+		GDT_ACCESS_READABLE_WRITEABLE | GDT_ACCESS_NOT_SYSTEM | GDT_ACCESS_PRESENT,
 		GDT_FLAG_SIZE | GDT_FLAG_GRANULARITY
 	)
 };
@@ -96,28 +96,18 @@ EXTERN_C void stage_third_startup(uint8_t drive) {
 
 	printf("Boot drive:\t\t\t\t\t\x1b[96m%#04x\x1b[0m", drive);
 
-	if (!drive_init(drive)) {
-		printf("\n\x1b[91;107mError: failed to init boot drive\x1b[0m\n");
-		panic_halt();
-	}
-
 	BOOTLOADER_INFO.boot_drive = drive;
-	printf(
-		" (Sectors/Track=\x1b[94m%#04x\x1b[0m, Heads=\x1b[94m%#06x\x1b[0m)\n",
-		drive_get_sectors_per_track(),
-		(uint16_t)drive_get_last_head_index() + 1
-	);
 
 	const uint32_t lba_fourth_stage_start = lba_my_start + my_length;
-	const uint32_t header_seg_fourth_stage = ((uintptr_t)FOURTH_STAGE_HEADER_BUFFER) >> 4;
 	const uint32_t header_off_fourth_stage = ((uintptr_t)FOURTH_STAGE_HEADER_BUFFER) & 0x0f;
+	const uint32_t header_seg_fourth_stage = ((uintptr_t)FOURTH_STAGE_HEADER_BUFFER) >> 4;
 	if (!drive_read_sectors_low(
-			lba_fourth_stage_start,
-			header_seg_fourth_stage,
-			header_off_fourth_stage,
-			1
-		)
-	) {
+		drive,
+		header_off_fourth_stage,
+		header_seg_fourth_stage,
+		(uint64_t)lba_fourth_stage_start,
+		1
+	)) {
 		printf("\n\x1b[91;107mError: failed to read the fourth stage header\x1b[0m\n");
 		panic_halt();
 	}
@@ -137,8 +127,9 @@ EXTERN_C void stage_third_startup(uint8_t drive) {
 	const uint32_t entry_point_fourth_stage = fourth_stage_header[3];
 	const uint32_t size_fourth_stage = len_fourth_stage * DRIVE_SECTOR_SIZE;
 	const uint32_t end_fourth_stage = base_fourth_stage + size_fourth_stage;
+	
 	printf(
-		"LSZT bootloader 4th stage:\nBase=%#010x, Size=%#x, End=%#x, LBA=%#010x\n",
+		"\nLSZT bootloader 4th stage:\nBase=%#010x, Size=%#x, End=%#x, LBA=%#010x\n",
 		base_fourth_stage,
 		size_fourth_stage,
 		end_fourth_stage,
@@ -146,12 +137,12 @@ EXTERN_C void stage_third_startup(uint8_t drive) {
 	);
 
 	if (!drive_read_sectors_low(
-			lba_fourth_stage_start,
-			(uint16_t)(base_fourth_stage >> 4),
-			(uint16_t)(base_fourth_stage & 0x0f),
-			len_fourth_stage
-		)
-	) {
+		drive,
+		(uint16_t)(base_fourth_stage & 0x0f),
+		(uint16_t)(base_fourth_stage >> 4),
+		(uint64_t)lba_fourth_stage_start,
+		len_fourth_stage
+	)) {
 		printf("\n\x1b[91;107mError: failed to read the fourth stage\x1b[0m\n");
 		panic_halt();
 	}
@@ -170,7 +161,9 @@ EXTERN_C void stage_third_startup(uint8_t drive) {
 
 	printf("A20 line:\t\t\t\t\t");
 	bool a20_state = a20_enabled();
-	if (a20_state) printf("\x1b[92m%s\x1b[0m\n", "[ENABLED]");
+	if (a20_state) {
+		printf("\x1b[92m%s\x1b[0m\n", "[ENABLED]");
+	}
 	else {
 		printf("\x1b[93m%s\x1b[0m\n", "[DISABLED]");
 
@@ -179,8 +172,12 @@ EXTERN_C void stage_third_startup(uint8_t drive) {
 			i8042_set_a20_state(true);
 
 			a20_state = a20_enabled();
-			if (a20_state) printf("\x1b[92m%s\x1b[0m\n", "[SUCCESS]");
-			else printf("\x1b[93m%s\x1b[0m\n", "[FAILED]");
+			if (a20_state) {
+				printf("\x1b[92m%s\x1b[0m\n", "[SUCCESS]");
+			}
+			else {
+				printf("\x1b[93m%s\x1b[0m\n", "[FAILED]");
+			}
 		}
 
 		if (!a20_state) {
@@ -188,8 +185,12 @@ EXTERN_C void stage_third_startup(uint8_t drive) {
 			a20_set_fast_gate_state(true);
 
 			a20_state = a20_enabled();
-			if (a20_state) printf("\x1b[92m%s\x1b[0m\n", "[SUCCESS]");
-			else printf("\x1b[93m%s\x1b[0m\n", "[FAILED]");
+			if (a20_state) {
+				printf("\x1b[92m%s\x1b[0m\n", "[SUCCESS]");
+			}
+			else {
+				printf("\x1b[93m%s\x1b[0m\n", "[FAILED]");
+			}
 		}
 		
 		if (!a20_state) {
@@ -198,27 +199,27 @@ EXTERN_C void stage_third_startup(uint8_t drive) {
 		}
 	}
 
+	BOOTLOADER_INFO.memory_map = (mem_phys_reg_t*)(end + 0x1000);
+
 	printf("Memory map:\t\t\t\t\t");
-	mem_phys_reg_t* mem_phys_regs = (mem_phys_reg_t*)(end + 0x1000);
-	size_t num_mem_phys_regs = 0;
-	if (!e820_get_map(mem_phys_regs, 100, &num_mem_phys_regs)) {
+	if (!e820_get_map(BOOTLOADER_INFO.memory_map, 100, &BOOTLOADER_INFO.memory_map_length)) {
 		printf("\x1b[93m%s\x1b[0m\n", "[UNAVAILABLE]");
 		printf("\x1b[91;107mError: failed to retrieve memory map\x1b[0m\n");
 		panic_halt();
 	}
 	
 	printf("\x1b[92m%s\x1b[0m\n", "[AVAILABLE]");
-	for (size_t i = 0; i < num_mem_phys_regs; i++) {
+	for (size_t i = 0; i < BOOTLOADER_INFO.memory_map_length; i++) {
 		printf(
 			"% 2u) Base: \x1b[96m%#010x%08x\x1b[0m, Length: \x1b[96m%#010x%08x\x1b[0m",
 			i + 1,
-			mem_phys_regs[i].base_high,
-			mem_phys_regs[i].base_low,
-			mem_phys_regs[i].length_high,
-			mem_phys_regs[i].length_low
+			BOOTLOADER_INFO.memory_map[i].base_high,
+			BOOTLOADER_INFO.memory_map[i].base_low,
+			BOOTLOADER_INFO.memory_map[i].length_high,
+			BOOTLOADER_INFO.memory_map[i].length_low
 		);
 
-		printf(", Type: \x1b[94m%#04x\x1b[0m\n",mem_phys_regs[i].type);
+		printf(", Type: \x1b[94m%#04x\x1b[0m\n",BOOTLOADER_INFO.memory_map[i].type);
 	}
 
 	if (BOOTLOADER_INFO.vbe_present) {
@@ -242,6 +243,11 @@ EXTERN_C void stage_third_startup(uint8_t drive) {
 		BOOTLOADER_INFO.video_mode.number
 	);
 
+	// puts("GDT:\n");
+	// for (size_t i = 0; i < sizeof(GDT_FOURTH_STAGE); i++) printf("%02x ", ((uint8_t*)&GDT_FOURTH_STAGE)[i]);
+	// puts("");
+	// panic_halt();
+
 	bool video_mode_set;
 	if (BOOTLOADER_INFO.vbe_present) {
 		BOOTLOADER_INFO.video_mode.indexed = false;
@@ -258,7 +264,6 @@ EXTERN_C void stage_third_startup(uint8_t drive) {
 	}
 
 	gdt_load(&GDT_DESCRIPTOR_FOURTH_STAGE, entry_point_fourth_stage, base_fourth_stage, (uintptr_t)&BOOTLOADER_INFO);
-
-	// the code will be added here
+	
 	panic_halt();
 }

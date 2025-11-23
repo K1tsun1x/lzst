@@ -30,5 +30,6 @@ vga_set_video_mode:
 .fin:
 	pop ax
 	pop bp
+	mov al, [.tmp_result]
 	retd
 .tmp_result:		db 0

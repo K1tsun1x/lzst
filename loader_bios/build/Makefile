@@ -94,4 +94,4 @@ clean:
 		$(OBJ_C_THIRD_STAGE)
 
 run:
-	qemu-system-i386 -monitor stdio -m 4G -cpu max -drive format=raw,file=$(RESULT) -D $(DIR_BUILD)/debug.txt -d cpu_reset
+	qemu-system-x86_64 -monitor stdio -m 4G -enable-kvm -cpu qemu64,+sse4.2,+avx -drive format=raw,file=$(RESULT) -D $(DIR_BUILD)/debug.txt -d cpu_reset

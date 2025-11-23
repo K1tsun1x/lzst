@@ -19,7 +19,14 @@ void min_stdio_init(void);
 /**
  * @return On success, returns the written character.
  */
-int putchar(int c);
+int put_colored_char(int c, uint8_t color);
+
+/**
+ * @return On success, returns the written character.
+ */
+static inline int putchar(int c) {
+	return put_colored_char(c, COLOR_LIGHT_GRAY);
+}
 
 int puts(const char* s);
 

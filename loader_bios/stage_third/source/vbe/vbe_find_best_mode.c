@@ -2,6 +2,8 @@
 
 static vbe_mode_info_t __VBE_MODE_INFO;
 
+EXTERN_C uint16_t LOADERCALL __vbe_read_far_word(uint16_t offset, uint16_t segment);
+
 static inline int __idiff(int a, int b) {
 	a -= b;
 	if (a < 0) a = -a;
@@ -19,16 +21,15 @@ void vbe_find_best_video_mode(
 
 	int best_depth_diff = 8 >= depth ? 8 - depth : (depth - 8) * 2;
 	int best_pix_diff = __idiff(320 * 200, (int)size);
-	uint16_t *modes;
 	int depth_diff;
 	int pix_diff;
 
-	uint16_t best_number = 0x13;
-	uint8_t	best_type = VIDEO_MODE_TYPE_DIRECT_COLOR;
-	uint16_t best_width = 320;
-	uint16_t best_height = 200;
-	uint8_t best_depth = 8;
-	uint16_t best_pitch = 320;
+	uint16_t best_number = 0;
+	uint8_t	best_type = 0;
+	uint16_t best_width = 0;
+	uint16_t best_height = 0;
+	uint8_t best_depth = 0;
+	uint16_t best_pitch = 0;
 	uint8_t best_bits_red = 0;
 	uint8_t best_shift_red = 0;
 	uint8_t best_bits_green = 0;
@@ -37,11 +38,18 @@ void vbe_find_best_video_mode(
 	uint8_t best_shift_blue = 0;
 	uint8_t best_bits_reserved = 0;
 	uint8_t best_shift_reserved = 0;
-	uint32_t best_physical_buffer_address = 0xb8000;
+	uint32_t best_physical_buffer_address = 0;
 
-	modes = (uint16_t*)((uintptr_t)vbe_info->video_mode_ptr[0]);
-	for (size_t i = 0; modes[i] != 0xFFFF; ++i) {
-		if (!vbe_get_mode_info(modes[i], &__VBE_MODE_INFO)) break;
+	uint16_t offset = vbe_info->video_mode_ptr[0];
+	uint16_t segment = vbe_info->video_mode_ptr[1];
+	uint32_t modes_address = (((uint32_t)segment) << 4) + (uint32_t)offset;
+	uint16_t mode_number;
+	do {
+		offset = modes_address & 0x0f;
+		segment = (modes_address >> 4) & 0xffff;
+		mode_number = __vbe_read_far_word(offset, segment);
+		modes_address += 2;
+		if (mode_number == 0xffff || !vbe_get_mode_info(mode_number, &__VBE_MODE_INFO)) break;
 
 		if (
 			!(__VBE_MODE_INFO.attributes & VBE_MODE_ATTRIBUTE_LFB) ||
@@ -56,7 +64,7 @@ void vbe_find_best_video_mode(
 			__VBE_MODE_INFO.height == height &&
 			__VBE_MODE_INFO.depth == depth
 		) {
-			best_number = modes[i];
+			best_number = mode_number;
 			best_type = __VBE_MODE_INFO.memory_model;
 			best_width = __VBE_MODE_INFO.width;
 			best_height = __VBE_MODE_INFO.height;
@@ -87,7 +95,7 @@ void vbe_find_best_video_mode(
 			best_pix_diff = pix_diff;
 			best_depth_diff = depth_diff;
 			
-			best_number = modes[i];
+			best_number = mode_number;
 			best_type = __VBE_MODE_INFO.memory_model;
 			best_width = __VBE_MODE_INFO.width;
 			best_height = __VBE_MODE_INFO.height;
@@ -103,25 +111,7 @@ void vbe_find_best_video_mode(
 			best_shift_reserved = __VBE_MODE_INFO.reserved_position;
 			best_physical_buffer_address = __VBE_MODE_INFO.framebuffer;
 		}
-	}
-
-	if (width == 640 && height == 480 && depth == 1) {
-		best_number = 0x11;
-		best_type = VIDEO_MODE_TYPE_HERCULES;
-		best_width = 640;
-		best_height = 480;
-		best_depth = 1;
-		best_pitch = 80;
-		best_bits_red = 0;
-		best_shift_red = 0;
-		best_bits_green = 0;
-		best_shift_green = 0;
-		best_bits_blue = 0;
-		best_shift_blue = 0;
-		best_bits_reserved = 0;
-		best_shift_reserved = 0;
-		best_physical_buffer_address = 0xb0000;
-	}
+	} while (mode_number != 0xffff);
 
 	if (best_video_mode) {
 		best_video_mode->number = best_number;

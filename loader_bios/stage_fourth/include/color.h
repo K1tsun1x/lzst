@@ -4,6 +4,23 @@
 
 #include "typedefs.h"
 
+#define COLOR_BLACK					((color_t){0, 0, 0})
+#define COLOR_BLUE					((color_t){0, 0, 171})
+#define COLOR_GREEN					((color_t){0, 171, 0})
+#define COLOR_CYAN					((color_t){0, 171, 171})
+#define COLOR_RED					((color_t){171, 0, 0})
+#define COLOR_MAGENTA				((color_t){171, 0, 171})
+#define COLOR_BROWN					((color_t){171, 100, 0})
+#define COLOR_LIGHT_GRAY			((color_t){171, 171, 171})
+#define COLOR_DARK_GRAY				((color_t){100, 100, 100})
+#define COLOR_LIGHT_BLUE			((color_t){100, 100, 241})
+#define COLOR_LIGHT_GREEN			((color_t){100, 241, 100})
+#define COLOR_LIGHT_CYAN			((color_t){100, 241, 241})
+#define COLOR_LIGHT_RED				((color_t){241, 100, 100})
+#define COLOR_LIGHT_MAGENTA			((color_t){241, 100, 241})
+#define COLOR_YELLOW				((color_t){241, 241, 100})
+#define COLOR_WHITE					((color_t){241, 241, 241})
+
 typedef struct _color_t {
 	uint8_t			r;
 	uint8_t			g;
@@ -15,7 +32,7 @@ static inline uint32_t color_scale_component(uint8_t color_component, uint8_t bi
 	return (color_component * 255 + ((1 << bits) - 1) / 2) / ((1 << bits) - 1);
 }
 
-static inline uint32_t color_scale_rgb(
+uint32_t color_scale_rgb(
 	uint8_t r,
 	uint8_t g,
 	uint8_t b,
@@ -25,33 +42,12 @@ static inline uint32_t color_scale_rgb(
 	uint8_t shift_green,
 	uint8_t bits_blue,
 	uint8_t shift_blue
-) {
-	uint32_t scaled_r = color_scale_component(r, bits_red) << shift_red;
-	uint32_t scaled_g = color_scale_component(g, bits_green) << shift_green;
-	uint32_t scaled_b = color_scale_component(b, bits_blue) << shift_blue;
-	return scaled_r | scaled_g | scaled_b;
-}
+);
 
-static inline size_t color_find_nearset_indexed(
+size_t color_find_nearset_index(
 	uint8_t r, uint8_t g, uint8_t b,
 	const color_t* palette,
 	size_t num_colors_in_palette
-) {
-	size_t best_distance2 = (size_t)-1;
-	size_t best_color_index = 0;
-	for (size_t i = 0; i < num_colors_in_palette; i++) {
-		int r_distance = r - palette[i].r;
-		int g_distance = g - palette[i].g;
-		int b_distance = b - palette[i].b;
-		size_t distance2 = r_distance * r_distance + g_distance * g_distance + b_distance * b_distance;
-
-		if (distance2 <= best_distance2) {
-			best_distance2 = distance2;
-			best_color_index = i;
-		}
-	}
-
-	return best_color_index;
-}
+);
 
 #endif

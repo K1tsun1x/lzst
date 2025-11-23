@@ -18,27 +18,27 @@ extern uint8_t TTY_BKG_RED;
 extern uint8_t TTY_BKG_GREEN;
 extern uint8_t TTY_BKG_BLUE;
 
-void tty_putchar(char32_t c, uint8_t r, uint8_t g, uint8_t b) {
+int tty_putchar(int c, uint8_t r, uint8_t g, uint8_t b) {
 	if (TTY_POSITION > TTY_MAX_POSITION) {
 		tty_scroll_down_once();
 		TTY_POSITION = (TTY_NUM_LINES - 1) * TTY_NUM_CHARS_PER_LINE;
 	}
 
-	if (c == U'\r') {
+	if (c == '\r') {
 		const size_t pos_in_line = TTY_POSITION % TTY_NUM_CHARS_PER_LINE;
 		TTY_POSITION -= pos_in_line;
 	}
-	else if (c == U'\n') {
+	else if (c == '\n') {
 		const size_t line = TTY_POSITION / TTY_NUM_CHARS_PER_LINE + 1;
 		TTY_POSITION = line * TTY_NUM_CHARS_PER_LINE;
 	}
-	else if (c == U'\t') {
+	else if (c == '\t') {
 		const size_t pos_in_line = TTY_POSITION % TTY_NUM_CHARS_PER_LINE;
 		const size_t spaces = TTY_TAB_WIDTH - (pos_in_line % TTY_TAB_WIDTH);
-		for (size_t i = 0; i < spaces; i++) tty_putchar(U' ', r, g, b);
+		for (size_t i = 0; i < spaces; i++) tty_putchar(' ', r, g, b);
 	}
-	else if (c == U'\v') for (size_t i = 0; i < TTY_TAB_WIDTH; i++) tty_putchar(U'\n', r, g, b);
-	else if (c == U'\b') {
+	else if (c == '\v') for (size_t i = 0; i < TTY_TAB_WIDTH; i++) tty_putchar('\n', r, g, b);
+	else if (c == '\b') {
 		if (TTY_POSITION) --TTY_POSITION;
 	}
 	else {
@@ -56,4 +56,6 @@ void tty_putchar(char32_t c, uint8_t r, uint8_t g, uint8_t b) {
 
 		++TTY_POSITION;
 	}
+
+	return c;
 }

@@ -10,8 +10,8 @@ SECTIONS {
 		LONG(__PTR_BASE__);
 		LONG(0);					/* the fourth stage length in sectors (will be set via shell) */
 		LONG(stage_fourth_startup);
-		LONG(800);					/* preferred video mode width */
-		LONG(600);					/* preferred video mode height */
+		LONG(1024);					/* preferred video mode width */
+		LONG(768);					/* preferred video mode height */
 		LONG(32);					/* preferred video mode depth */
 	}
 

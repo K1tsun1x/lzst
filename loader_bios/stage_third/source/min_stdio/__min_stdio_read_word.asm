@@ -8,7 +8,6 @@ global __min_stdio_read_word
 __min_stdio_read_word:
 	push bp
 	mov bp, sp
-	push ax
 	push bx
 	push es
 
@@ -19,6 +18,5 @@ __min_stdio_read_word:
 
 	pop es
 	pop bx
-	pop ax
 	pop bp
 	retd

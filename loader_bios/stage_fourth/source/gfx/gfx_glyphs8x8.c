@@ -1285,7 +1285,7 @@ const glyph8x8_t GFX_GLYPHS8X8[] = {
 	/*
 		Russian letters
 	*/
-
+	/*
 	{ U'А', {
 		0b00111000,
 		0b01101100,
@@ -1326,6 +1326,7 @@ const glyph8x8_t GFX_GLYPHS8X8[] = {
 		0b01100000,
 		0b00000000,
 	}},
+	*/
 };
 
 const size_t GFX_NUM_GLYPHS8X8 = sizeof(GFX_GLYPHS8X8) / sizeof(GFX_GLYPHS8X8[0]);
