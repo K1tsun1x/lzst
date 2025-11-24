@@ -40,6 +40,31 @@ int tty_puts(
 	bool fill_bkg
 );
 
+/**
+ * Template: %(#)[%duxobcs]
+ * - %% = %
+ * - %d = ptrdiff_t (radix = 10)
+ * - %u = size_t (radix = 10)
+ * - %x = size_t (radix = 16)
+ * - %o = size_t (radix = 8)
+ * - %b = size_t (radix = 2)
+ * - %s = char*
+ * - %c = char
+ * 
+ * \x1b[attribute1;attribute2...m = set attribute
+ * 0 - default color
+ * Foreground colors:
+ * - 30: black, 31: red, 32: green, 33: brown,
+ * - 34: blue, 35: magenta, 36: cyan, 37: dark gray,
+ * - 90: light gray, 91: light red, 92: light green, 93: yellow,
+ * - 94: light blue, 95: light magenta, 96: light cyan, 97: white
+ * 
+ * Background colors:
+ * - 90: black, 91: red, 92: green, 93: brown,
+ * - 94: blue, 95: magenta, 96: cyan, 97: dark gray,
+ * - 100: light gray, 101: light red, 102: light green, 103: yellow,
+ * - 104: light blue, 105: light magenta, 106: light cyan, 107: white
+ */
 int tty_printf(
 	uint8_t frg_r, uint8_t frg_g, uint8_t frg_b,
 	uint8_t bkg_r, uint8_t bkg_g, uint8_t bkg_b,
@@ -47,6 +72,31 @@ int tty_printf(
 	const char* s, ...
 );
 
+/**
+ * Template: %(#)[%duxobcs]
+ * - %% = %
+ * - %d = ptrdiff_t (radix = 10)
+ * - %u = size_t (radix = 10)
+ * - %x = size_t (radix = 16)
+ * - %o = size_t (radix = 8)
+ * - %b = size_t (radix = 2)
+ * - %s = char*
+ * - %c = char
+ * 
+ * \x1b[attribute1;attribute2...m = set attribute
+ * 0 - default color
+ * Foreground colors:
+ * - 30: black, 31: red, 32: green, 33: brown,
+ * - 34: blue, 35: magenta, 36: cyan, 37: dark gray,
+ * - 90: light gray, 91: light red, 92: light green, 93: yellow,
+ * - 94: light blue, 95: light magenta, 96: light cyan, 97: white
+ * 
+ * Background colors:
+ * - 90: black, 91: red, 92: green, 93: brown,
+ * - 94: blue, 95: magenta, 96: cyan, 97: dark gray,
+ * - 100: light gray, 101: light red, 102: light green, 103: yellow,
+ * - 104: light blue, 105: light magenta, 106: light cyan, 107: white
+ */
 int tty_vprintf(
 	uint8_t frg_r, uint8_t frg_g, uint8_t frg_b,
 	uint8_t bkg_r, uint8_t bkg_g, uint8_t bkg_b,

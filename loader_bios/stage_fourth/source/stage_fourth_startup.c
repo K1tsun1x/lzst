@@ -6,6 +6,9 @@
 #include <pmm/pmm.h>
 #include <fpu/fpu.h>
 
+extern uint32_t __PTR_BASE__[];
+extern uint32_t __PTR_END__[];
+
 extern gfx_video_mode_t GFX_VIDEO_MODE;
 
 static boot_info_t BOOT_INFO;
@@ -13,6 +16,7 @@ static boot_info_t BOOT_INFO;
 void stage_fourth_startup(boot_info_t* bootloader_info) {
 	BOOT_INFO = *bootloader_info;
 	gfx_init(&BOOT_INFO.video_mode);
+	tty_init(80, 25, 2, 2);
 
 	bool cpuid_prsnt = cpuid486_present();
 	bool fpu_prsnt = false;
@@ -52,6 +56,8 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 	else {
 		BOOT_INFO.cpuid_present = false;
 		// FIXME: not implemented yet...
+		tty_prints_negative("Error: machine without CPUID is not supported!");
+		panic_halt();
 	}
 
 	BOOT_INFO.fpu_present = fpu_prsnt;
@@ -63,7 +69,7 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		const float aspect = (float)w / (float)h;
 
 		size_t num_chars_per_line = w / 14;
-		size_t num_lines = h / 14;
+		size_t num_lines = h / 18;
 
 		if (aspect > 1.6f && num_chars_per_line < 100) num_chars_per_line = 100;
 		if (aspect < 1.3f && num_chars_per_line > 80) num_chars_per_line = 80;
@@ -76,9 +82,13 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 
 		tty_init(num_chars_per_line, num_lines, 2, 2);
 	}
-	else tty_init(80, 25, 2, 2);
+	else {
+		// FIXME: not implemented yet...
+		tty_prints_negative("Error: machine without x87 FPU is not supported!");
+		panic_halt();
+	}
 
-	const gfx_color_t tty_bkg_color = GFX_COLOR_BLACK;
+	const gfx_color_t tty_bkg_color = GFX_PACK_COLOR(0x18, 0x18, 0x18);
 	const gfx_color_t tty_frg_color = GFX_COLOR_LIGHT_GRAY;
 	gfx_fill_rectangle(0, 0, GFX_VIDEO_MODE.width, GFX_VIDEO_MODE.height, GFX_UNPACK_COLOR(tty_bkg_color));
 	tty_puts("Welcome to LZST bootloader!", 0xff, 0x7f, 0, GFX_UNPACK_COLOR(tty_bkg_color), true);
@@ -87,7 +97,7 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		GFX_UNPACK_COLOR(tty_frg_color),
 		GFX_UNPACK_COLOR(tty_bkg_color),
 		false,
-		"Boot drive:\t\t\t\x1b[96m%#x\x1b[0m\n", BOOT_INFO.boot_drive
+		"Boot drive:\t\t\t\x1b[94m%#x\x1b[0m\n", BOOT_INFO.boot_drive
 	);
 
 	tty_prints("VGA:\t\t\t\t", GFX_UNPACK_COLOR(tty_frg_color), GFX_UNPACK_COLOR(tty_bkg_color), true);
@@ -156,13 +166,52 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		BOOT_INFO.video_mode.depth
 	);
 
-	tty_puts("Memory map:", GFX_UNPACK_COLOR(tty_frg_color), GFX_UNPACK_COLOR(tty_bkg_color), true);
+	const e820_reg_t RESERVED_REGS[] = {
+		{	// IVT, BDA
+			0x0000000000000000,
+			0x0000000000000500,
+			E820_REG_TYPE_RESERVED
+		},
+		{	// Video, EBDA, BIOS ROM (16-bit)
+			0x0000000000080000,
+			0x0000000000080000,
+			E820_REG_TYPE_RESERVED
+		},
+		{	// ISA hole
+			0x0000000000f00000,
+			0x0000000000100000,
+			E820_REG_TYPE_RESERVED
+		},
+		{	// PCI, MMIO, ...
+			0x00000000c0000000,
+			0x0000000040000000,
+			E820_REG_TYPE_RESERVED
+		},
+		{	// BIOS ROM (64-bit)
+			0x00000000ff000000,
+			0x0000000001000000,
+			E820_REG_TYPE_RESERVED
+		},
+		{	// The fourth stage
+			(uint64_t)(uintptr_t)&__PTR_BASE__,
+			(uint64_t)((uintptr_t)&__PTR_END__ - (uintptr_t)&__PTR_BASE__),
+			E820_REG_TYPE_RESERVED
+		},
+		{	// Framebuffer
+			(uint64_t)(uintptr_t)GFX_VIDEO_MODE.framebuffer,
+			(uint64_t)(GFX_VIDEO_MODE.height * ((GFX_VIDEO_MODE.depth + 7) / 8) * GFX_VIDEO_MODE.pitch),
+			E820_REG_TYPE_RESERVED
+		}
+	};
 
 	BOOT_INFO.memory_map_length = pmm_init(
-		BOOT_INFO.memory_map, BOOT_INFO.memory_map_length,
-		NULL, 0
+		BOOT_INFO.memory_map,
+		BOOT_INFO.memory_map_length,
+		RESERVED_REGS,
+		sizeof(RESERVED_REGS) / sizeof(RESERVED_REGS[0])
 	);
 
+	tty_puts("Normalized memory map:", GFX_UNPACK_COLOR(tty_frg_color), GFX_UNPACK_COLOR(tty_bkg_color), true);
 	for (size_t i = 0; i < BOOT_INFO.memory_map_length; i++) {
 		tty_printf(
 			GFX_UNPACK_COLOR(tty_frg_color),
@@ -170,13 +219,13 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 			false,
 			"%u)\tBase=\x1b[96m%#010x%08x\x1b[0m, Length=\x1b[96m%#010x%08x\x1b[0m, Type=\x1b[94m%u\x1b[0m\n",
 			i + 1,
-			BOOT_INFO.memory_map[i].base_high,
-			BOOT_INFO.memory_map[i].base_low,
-			BOOT_INFO.memory_map[i].length_high,
-			BOOT_INFO.memory_map[i].length_low,
+			(uint32_t)(BOOT_INFO.memory_map[i].base >> 32),
+			(uint32_t)(BOOT_INFO.memory_map[i].base & 0xffffffff),
+			(uint32_t)(BOOT_INFO.memory_map[i].length >> 32),
+			(uint32_t)(BOOT_INFO.memory_map[i].length & 0xffffffff),
 			BOOT_INFO.memory_map[i].type
 		);
 	}
 	
-	__asm__ __volatile__("jmp ."::"a"(BOOT_INFO.video_mode.framebuffer));
+	panic_halt();
 }
