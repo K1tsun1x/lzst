@@ -5,7 +5,7 @@
 #include "mem_phys_reg_type.h"
 
 #pragma pack(push, 1)
-typedef struct _mem_phys_reg_t {
+typedef struct _boot_mem_reg_t {
 	union {
 		struct {
 			uint32_t	base_low;
@@ -20,8 +20,8 @@ typedef struct _mem_phys_reg_t {
 		};
 		uint64_t		length;
 	};
-	mem_phys_reg_type_t	type;
-} mem_phys_reg_t, *pmem_phys_reg_t;
+	boot_mem_reg_type_t	type;
+} boot_mem_reg_t;
 #pragma pack(pop)
 
 #endif

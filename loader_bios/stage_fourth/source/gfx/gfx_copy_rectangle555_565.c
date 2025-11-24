@@ -1,10 +1,10 @@
-#include <gfx.h>
+#include <gfx/gfx.h>
 
-extern video_mode_t GFX_VIDEO_MODE;
+extern gfx_video_mode_t GFX_VIDEO_MODE;
 extern uint8_t* GFX_BUFFER;
 
 void gfx_copy_rectangle555_565(int src_x, int src_y, int dst_x, int dst_y, size_t width, size_t height) {
-	const video_mode_t* vm = &GFX_VIDEO_MODE;
+	const gfx_video_mode_t* vm = &GFX_VIDEO_MODE;
 	if (src_x < 0) {
 		width += src_x;
 		src_x = 0;

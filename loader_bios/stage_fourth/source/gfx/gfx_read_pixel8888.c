@@ -1,13 +1,10 @@
-#include <gfx.h>
+#include <gfx/gfx.h>
 
-extern video_mode_t GFX_VIDEO_MODE;
+extern gfx_video_mode_t GFX_VIDEO_MODE;
 extern uint8_t* GFX_BUFFER;
 
-/**
- * Only for non-index video mode with 32 bits per pixel (ARGB, A - reserved)
- */
 void gfx_read_pixel8888(int x, int y, uint8_t* r, uint8_t* g, uint8_t* b) {
-	const video_mode_t* vm = &GFX_VIDEO_MODE;
+	const gfx_video_mode_t* vm = &GFX_VIDEO_MODE;
 	uint8_t cr;
 	uint8_t cg;
 	uint8_t cb;

@@ -1,0 +1,18 @@
+#pragma once
+#ifndef __GFX_VIDEO_MODE_TYPE_H
+#define __GFX_VIDEO_MODE_TYPE_H
+
+#include <typedefs.h>
+
+typedef enum _gfx_video_mode_type_t ENUM_TYPE(uint8_t) {
+	GFX_VIDEO_MODE_TYPE_TEXT,
+	GFX_VIDEO_MODE_TYPE_CGA,
+	GFX_VIDEO_MODE_TYPE_HERCULES,
+	GFX_VIDEO_MODE_TYPE_PLANAR,
+	GFX_VIDEO_MODE_TYPE_PACKED,
+	GFX_VIDEO_MODE_TYPE_NON_CHAIN_4,
+	GFX_VIDEO_MODE_TYPE_DIRECT_COLOR,
+	GFX_VIDEO_MODE_TYPE_YUV
+} gfx_video_mode_type_t;
+
+#endif

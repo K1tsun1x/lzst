@@ -1,5 +1,5 @@
 #include <min_stdio.h>
-#include <bootloader_info.h>
+#include <boot_info.h>
 #include <vga.h>
 #include <a20.h>
 #include <i8042.h>
@@ -13,7 +13,7 @@ extern uintptr_t __PTR_BASE__[];
 extern uintptr_t __PTR_END__[];
 
 static vbe_info_t VBE_INFO;
-static bootloader_info_t BOOTLOADER_INFO = {
+static boot_info_t BOOT_INFO = {
 	.vga_present = false,
 	.vbe_present = false,
 	.i8042_present = false,
@@ -70,19 +70,19 @@ EXTERN_C void stage_third_startup(uint8_t drive) {
 
 	min_stdio_init();
 	if (vga_present()) {
-		BOOTLOADER_INFO.vga_present = true;
+		BOOT_INFO.vga_present = true;
 		vga_set_cursor_state(false);
 	}
-	else BOOTLOADER_INFO.vga_present = false;
+	else BOOT_INFO.vga_present = false;
 	
-	if (vbe_get_info(&VBE_INFO)) BOOTLOADER_INFO.vbe_present = true;
+	if (vbe_get_info(&VBE_INFO)) BOOT_INFO.vbe_present = true;
 	else {
 		*((uint16_t*)((uintptr_t)VBE_INFO.video_mode_ptr[0])) = 0xffff;
-		BOOTLOADER_INFO.vbe_present = false;
+		BOOT_INFO.vbe_present = false;
 	}
 
-	if (i8042_present()) BOOTLOADER_INFO.i8042_present = true;
-	else BOOTLOADER_INFO.i8042_present = false;
+	if (i8042_present()) BOOT_INFO.i8042_present = true;
+	else BOOT_INFO.i8042_present = false;
 	
 	printf(
 		"LSZT bootloader 3rd stage:\nBase=%#x, Size=%#x, End=%#x, LBA=%xh\n",
@@ -96,7 +96,7 @@ EXTERN_C void stage_third_startup(uint8_t drive) {
 
 	printf("Boot drive:\t\t\t\t\t\x1b[96m%#04x\x1b[0m", drive);
 
-	BOOTLOADER_INFO.boot_drive = drive;
+	BOOT_INFO.boot_drive = drive;
 
 	const uint32_t lba_fourth_stage_start = lba_my_start + my_length;
 	const uint32_t header_off_fourth_stage = ((uintptr_t)FOURTH_STAGE_HEADER_BUFFER) & 0x0f;
@@ -148,15 +148,15 @@ EXTERN_C void stage_third_startup(uint8_t drive) {
 	}
 
 	printf("VGA:\t\t\t\t\t\t");
-	if (BOOTLOADER_INFO.vga_present) printf("\x1b[92m%s\x1b[0m\n", "[PRESENT]");
+	if (BOOT_INFO.vga_present) printf("\x1b[92m%s\x1b[0m\n", "[PRESENT]");
 	else printf("\x1b[93m%s\x1b[0m\n", "[NOT PRESENT]");
 	
 	printf("VBE(VESA):\t\t\t\t\t");
-	if (BOOTLOADER_INFO.vbe_present) printf("\x1b[92m%s\x1b[0m\n", "[PRESENT]");
+	if (BOOT_INFO.vbe_present) printf("\x1b[92m%s\x1b[0m\n", "[PRESENT]");
 	else printf("\x1b[93m%s\x1b[0m\n", "[NOT PRESENT]");
 
 	printf("i8042 controller:\t\t\t");
-	if (BOOTLOADER_INFO.i8042_present) printf("\x1b[92m%s\x1b[0m\n", "[PRESENT]");
+	if (BOOT_INFO.i8042_present) printf("\x1b[92m%s\x1b[0m\n", "[PRESENT]");
 	else printf("\x1b[93m%s\x1b[0m\n", "[NOT PRESENT]");
 
 	printf("A20 line:\t\t\t\t\t");
@@ -167,7 +167,7 @@ EXTERN_C void stage_third_startup(uint8_t drive) {
 	else {
 		printf("\x1b[93m%s\x1b[0m\n", "[DISABLED]");
 
-		if (BOOTLOADER_INFO.i8042_present) {
+		if (BOOT_INFO.i8042_present) {
 			printf("A20 enable via i8042 controller:\t\t");
 			i8042_set_a20_state(true);
 
@@ -199,30 +199,30 @@ EXTERN_C void stage_third_startup(uint8_t drive) {
 		}
 	}
 
-	BOOTLOADER_INFO.memory_map = (mem_phys_reg_t*)(end + 0x1000);
+	BOOT_INFO.memory_map = (boot_mem_reg_t*)(end + 0x1000);
 
 	printf("Memory map:\t\t\t\t\t");
-	if (!e820_get_map(BOOTLOADER_INFO.memory_map, 100, &BOOTLOADER_INFO.memory_map_length)) {
+	if (!e820_get_map(BOOT_INFO.memory_map, 100, &BOOT_INFO.memory_map_length)) {
 		printf("\x1b[93m%s\x1b[0m\n", "[UNAVAILABLE]");
 		printf("\x1b[91;107mError: failed to retrieve memory map\x1b[0m\n");
 		panic_halt();
 	}
 	
 	printf("\x1b[92m%s\x1b[0m\n", "[AVAILABLE]");
-	for (size_t i = 0; i < BOOTLOADER_INFO.memory_map_length; i++) {
+	for (size_t i = 0; i < BOOT_INFO.memory_map_length; i++) {
 		printf(
 			"% 2u) Base: \x1b[96m%#010x%08x\x1b[0m, Length: \x1b[96m%#010x%08x\x1b[0m",
 			i + 1,
-			BOOTLOADER_INFO.memory_map[i].base_high,
-			BOOTLOADER_INFO.memory_map[i].base_low,
-			BOOTLOADER_INFO.memory_map[i].length_high,
-			BOOTLOADER_INFO.memory_map[i].length_low
+			BOOT_INFO.memory_map[i].base_high,
+			BOOT_INFO.memory_map[i].base_low,
+			BOOT_INFO.memory_map[i].length_high,
+			BOOT_INFO.memory_map[i].length_low
 		);
 
-		printf(", Type: \x1b[94m%#04x\x1b[0m\n",BOOTLOADER_INFO.memory_map[i].type);
+		printf(", Type: \x1b[94m%#04x\x1b[0m\n",BOOT_INFO.memory_map[i].type);
 	}
 
-	if (BOOTLOADER_INFO.vbe_present) {
+	if (BOOT_INFO.vbe_present) {
 		const size_t preferred_width = fourth_stage_header[4];
 		const size_t preferred_height = fourth_stage_header[5];
 		const size_t preferred_depth = fourth_stage_header[6];
@@ -231,16 +231,16 @@ EXTERN_C void stage_third_startup(uint8_t drive) {
 			preferred_width,
 			preferred_height,
 			preferred_depth,
-			&BOOTLOADER_INFO.video_mode
+			&BOOT_INFO.video_mode
 		);
 	}
 
 	printf(
 		"Video mode:\t\t\t\t\t\x1b[94m%u\x1b[0mx\x1b[94m%u\x1b[0mx\x1b[94m%u\x1b[0m (\x1b[96m#%xh\x1b[0m)\n",
-		BOOTLOADER_INFO.video_mode.width,
-		BOOTLOADER_INFO.video_mode.height,
-		BOOTLOADER_INFO.video_mode.depth,
-		BOOTLOADER_INFO.video_mode.number
+		BOOT_INFO.video_mode.width,
+		BOOT_INFO.video_mode.height,
+		BOOT_INFO.video_mode.depth,
+		BOOT_INFO.video_mode.number
 	);
 
 	// puts("GDT:\n");
@@ -249,21 +249,21 @@ EXTERN_C void stage_third_startup(uint8_t drive) {
 	// panic_halt();
 
 	bool video_mode_set;
-	if (BOOTLOADER_INFO.vbe_present) {
-		BOOTLOADER_INFO.video_mode.indexed = false;
-		video_mode_set = vbe_set_video_mode(0x4000 | BOOTLOADER_INFO.video_mode.number);
+	if (BOOT_INFO.vbe_present) {
+		BOOT_INFO.video_mode.indexed = false;
+		video_mode_set = vbe_set_video_mode(0x4000 | BOOT_INFO.video_mode.number);
 	}
 	else {
-		if (BOOTLOADER_INFO.video_mode.number == 0x13) BOOTLOADER_INFO.video_mode.indexed = true;
-		video_mode_set = vga_set_video_mode((uint8_t)BOOTLOADER_INFO.video_mode.number);
+		if (BOOT_INFO.video_mode.number == 0x13) BOOT_INFO.video_mode.indexed = true;
+		video_mode_set = vga_set_video_mode((uint8_t)BOOT_INFO.video_mode.number);
 	}
 
 	if (!video_mode_set) {
-		printf("\x1b[91;107mError: failed to set video mode #%xh\x1b[0m\n", BOOTLOADER_INFO.video_mode.number);
+		printf("\x1b[91;107mError: failed to set video mode #%xh\x1b[0m\n", BOOT_INFO.video_mode.number);
 		panic_halt();
 	}
 
-	gdt_load(&GDT_DESCRIPTOR_FOURTH_STAGE, entry_point_fourth_stage, base_fourth_stage, (uintptr_t)&BOOTLOADER_INFO);
+	gdt_load(&GDT_DESCRIPTOR_FOURTH_STAGE, entry_point_fourth_stage, base_fourth_stage, (uintptr_t)&BOOT_INFO);
 	
 	panic_halt();
 }

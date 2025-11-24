@@ -1,13 +1,10 @@
-#include <gfx.h>
+#include <gfx/gfx.h>
 
-extern video_mode_t GFX_VIDEO_MODE;
+extern gfx_video_mode_t GFX_VIDEO_MODE;
 extern uint8_t* GFX_BUFFER;
 
-/**
- * Only for non-index video mode with 15 or 16 bits per pixel (RGB)
- */
 void gfx_read_pixel555_565(int x, int y, uint8_t* r, uint8_t* g, uint8_t* b) {
-	const video_mode_t* vm = &GFX_VIDEO_MODE;
+	const gfx_video_mode_t* vm = &GFX_VIDEO_MODE;
 	uint8_t cr;
 	uint8_t cg;
 	uint8_t cb;
@@ -19,9 +16,9 @@ void gfx_read_pixel555_565(int x, int y, uint8_t* r, uint8_t* g, uint8_t* b) {
 		const uint32_t mask_red = (1 << GFX_VIDEO_MODE.bits_red) - 1;
 		const uint32_t mask_green = (1 << GFX_VIDEO_MODE.bits_green) - 1;
 		const uint32_t mask_blue = (1 << GFX_VIDEO_MODE.bits_blue) - 1;
-		cr = color_scale_component((pixel >> GFX_VIDEO_MODE.shift_red) & mask_red, 8);
-		cg = color_scale_component((pixel >> GFX_VIDEO_MODE.shift_green) & mask_green, 8);
-		cb = color_scale_component((pixel >> GFX_VIDEO_MODE.shift_blue) & mask_blue, 8);
+		cr = gfx_color_scale_component((pixel >> GFX_VIDEO_MODE.shift_red) & mask_red, 8);
+		cg = gfx_color_scale_component((pixel >> GFX_VIDEO_MODE.shift_green) & mask_green, 8);
+		cb = gfx_color_scale_component((pixel >> GFX_VIDEO_MODE.shift_blue) & mask_blue, 8);
 	}
 
 	if (r) *r = cr;

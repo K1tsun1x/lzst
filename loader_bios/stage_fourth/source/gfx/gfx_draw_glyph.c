@@ -1,26 +1,7 @@
-#include <gfx.h>
+#include <gfx/gfx.h>
 
-// Video mode information (width, height, etc...)
-extern video_mode_t GFX_VIDEO_MODE;
+extern gfx_video_mode_t GFX_VIDEO_MODE;
 
-/**
- * @note gfx_draw_pixel(x, y, r, g, b) - Procedure for drawing one pixel
- * @warning Bits in glyphs must be in the MSB format!
- * @param x X of the point on the screen where we will display the symbol
- * @param y Y of the point on the screen where we will display the symbol
- * @param glyph_data Glyph (array of bytes/words/...)
- * @param width_bits Glyph width in bits
- * @param height_bits Glyph height in bits
- * @param frg_r Red glyph color component
- * @param frg_g Green glyph color component
- * @param frg_b Blue glyph color component
- * @param target_width Target width of the glyph on the screen (the glyph can be stretched/compressed)
- * @param target_height Target height of the glyph on the screen
- * @param bkg_r Red background color component
- * @param bkg_g Green background color component
- * @param bkg_b Blue background color component
- * @param fill_bkg Determines whether the background under the glyph will be painted over
- */
 void gfx_draw_glyph(
 	int x, int y,
 	const void* glyph_data,
@@ -30,7 +11,7 @@ void gfx_draw_glyph(
 	uint8_t bkg_r, uint8_t bkg_g, uint8_t bkg_b,
 	bool fill_bkg
 ) {
-	const video_mode_t* vm = &GFX_VIDEO_MODE;
+	const gfx_video_mode_t* vm = &GFX_VIDEO_MODE;
 	if (target_width == 0 || target_height == 0) return;
 
 	// src_x = floor(dst_x * src_w / target_width)

@@ -1,9 +1,9 @@
-#include <gfx.h>
+#include <gfx/gfx.h>
 
-extern video_mode_t GFX_VIDEO_MODE;
+extern gfx_video_mode_t GFX_VIDEO_MODE;
 
 void gfx_fill_rectangle(int x, int y, size_t width, size_t height, uint8_t r, uint8_t g, uint8_t b) {
-	const video_mode_t* vm = &GFX_VIDEO_MODE;
+	const gfx_video_mode_t* vm = &GFX_VIDEO_MODE;
 	if (x >= (int)vm->width || y >= (int)vm->height) return;
 
 	int ex = x + (int)width;

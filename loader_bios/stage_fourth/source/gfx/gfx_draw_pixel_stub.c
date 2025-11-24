@@ -1,13 +1,9 @@
-#include <gfx.h>
+#include <gfx/gfx.h>
 
-/**
- * Needed if there is no suitable gfx_draw_pixel*
- */
-void gfx_draw_pixel_stub(size_t x, size_t y, uint8_t r, uint8_t g, uint8_t b) {
-	(void)(x);
-	(void)(y);
-	(void)(r);
-	(void)(g);
-	(void)(b);
-	return;
+void gfx_draw_pixel_stub(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
+	UNREFERENCED_PARAMETER(x);
+	UNREFERENCED_PARAMETER(y);
+	UNREFERENCED_PARAMETER(r);
+	UNREFERENCED_PARAMETER(g);
+	UNREFERENCED_PARAMETER(b);
 }

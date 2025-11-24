@@ -1,16 +1,13 @@
-#include <gfx.h>
+#include <gfx/gfx.h>
 
-extern video_mode_t GFX_VIDEO_MODE;
+extern gfx_video_mode_t GFX_VIDEO_MODE;
 extern uint8_t* GFX_BUFFER;
 
-/**
- * Only for non-index video mode with 24 bits per pixel (RGB)
- */
 void gfx_draw_pixel888(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
-	const video_mode_t* vm = &GFX_VIDEO_MODE;
+	const gfx_video_mode_t* vm = &GFX_VIDEO_MODE;
 	if (x < 0 || y < 0 || x >= (int)vm->width || y >= (int)vm->height) return;
 
-	uint32_t pixel = color_scale_rgb(
+	uint32_t pixel = gfx_color_scale_rgb(
 		r, g, b,
 		vm->bits_red, vm->shift_red,
 		vm->bits_green, vm->shift_green,

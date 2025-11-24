@@ -1,6 +1,4 @@
-#include <tty.h>
-
-extern video_mode_t GFX_VIDEO_MODE;
+#include <tty/tty.h>
 
 extern size_t TTY_NUM_CHARS_PER_LINE;
 extern size_t TTY_NUM_LINES;
@@ -14,13 +12,14 @@ extern size_t TTY_CELL_Y;
 extern size_t TTY_POSITION;
 extern size_t TTY_MAX_POSITION;
 
-extern uint8_t TTY_BKG_RED;
-extern uint8_t TTY_BKG_GREEN;
-extern uint8_t TTY_BKG_BLUE;
-
-int tty_putchar(int c, uint8_t r, uint8_t g, uint8_t b) {
+int tty_putchar(
+	int c,
+	uint8_t frg_r, uint8_t frg_g, uint8_t frg_b,
+	uint8_t bkg_r, uint8_t bkg_g, uint8_t bkg_b,
+	bool fill_bkg
+) {
 	if (TTY_POSITION > TTY_MAX_POSITION) {
-		tty_scroll_down_once();
+		tty_scroll_down(1, bkg_r, bkg_g, bkg_b);
 		TTY_POSITION = (TTY_NUM_LINES - 1) * TTY_NUM_CHARS_PER_LINE;
 	}
 
@@ -35,9 +34,11 @@ int tty_putchar(int c, uint8_t r, uint8_t g, uint8_t b) {
 	else if (c == '\t') {
 		const size_t pos_in_line = TTY_POSITION % TTY_NUM_CHARS_PER_LINE;
 		const size_t spaces = TTY_TAB_WIDTH - (pos_in_line % TTY_TAB_WIDTH);
-		for (size_t i = 0; i < spaces; i++) tty_putchar(' ', r, g, b);
+		for (size_t i = 0; i < spaces; i++) tty_putchar(' ', frg_r, frg_g, frg_b, bkg_r, bkg_g, bkg_b, fill_bkg);
 	}
-	else if (c == '\v') for (size_t i = 0; i < TTY_TAB_WIDTH; i++) tty_putchar('\n', r, g, b);
+	else if (c == '\v') {
+		for (size_t i = 0; i < TTY_TAB_WIDTH; i++) tty_putchar('\n', frg_r, frg_g, frg_b, bkg_r, bkg_g, bkg_b, fill_bkg);
+	}
 	else if (c == '\b') {
 		if (TTY_POSITION) --TTY_POSITION;
 	}
@@ -48,11 +49,25 @@ int tty_putchar(int c, uint8_t r, uint8_t g, uint8_t b) {
 		gfx_draw_glyph8x8(
 			c,
 			x, y,
-			r, g, b,
+			frg_r, frg_g, frg_b,
 			TTY_TARGET_GLYPH_WIDTH, TTY_TARGET_GLYPH_HEIGHT,
-			TTY_BKG_RED, TTY_BKG_GREEN, TTY_BKG_BLUE,
-			true
+			bkg_r, bkg_g, bkg_b,
+			fill_bkg
 		);
+
+		if (fill_bkg) {
+			gfx_fill_rectangle(
+				x + TTY_TARGET_GLYPH_WIDTH, y,
+				TTY_SPACING_X, TTY_CELL_Y,
+				bkg_r, bkg_g, bkg_b
+			);
+			
+			gfx_fill_rectangle(
+				x, y + TTY_TARGET_GLYPH_HEIGHT,
+				TTY_CELL_X, TTY_SPACING_Y,
+				bkg_r, bkg_g, bkg_b
+			);
+		}
 
 		++TTY_POSITION;
 	}

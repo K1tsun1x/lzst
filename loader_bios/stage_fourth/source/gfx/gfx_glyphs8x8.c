@@ -1,6 +1,6 @@
-#include <gfx.h>
+#include <gfx/gfx.h>
 
-const glyph8x8_t GFX_GLYPHS8X8[] = {
+const gfx_glyph8x8_t GFX_GLYPHS8X8[] = {
 	{ 0, {
 		0b01111110,
 		0b10000001,

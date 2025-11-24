@@ -16,6 +16,8 @@
 #define ENUM_TYPE(type)
 #endif
 
+#define UNREFERENCED_PARAMETER(...)	((void)(__VA_ARGS__))
+
 #define ARRAY_LENGTH_VARIABLE		1
 
 #if defined(__GNUC__) || defined(__clang__)

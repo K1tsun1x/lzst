@@ -1,4 +1,4 @@
-#include <gfx.h>
+#include <gfx/gfx.h>
 
 void gfx_draw_string8x8(
 	const char* s,
