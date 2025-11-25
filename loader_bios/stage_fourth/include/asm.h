@@ -307,4 +307,21 @@ static inline void panic_halt(void) {
 	}
 }
 
+static inline void invlpg(uintptr_t virt) {
+#ifdef __GNUC_CLANG__
+	__asm__ __volatile__("invlpg (%0)"::"r"(virt):"memory");
+#elif defined(_MSC_VER)
+#ifdef X64
+	__invlpg(virt);
+#else
+	__asm {
+		push eax
+		mov eax, virt
+		invlpg [eax]
+		pop eax
+	}
+#endif
+#endif
+}
+
 #endif
