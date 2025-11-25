@@ -4,6 +4,7 @@
 
 #include <typedefs.h>
 
+void* __cdecl memset(void* dest, int c, size_t n);
 void* __cdecl memcpy(void* dest, const void* src, size_t count);
 void* __cdecl memmove(void* dest, const void* src, size_t count);
 int __cdecl memcmp(const void* a, const void* b, size_t count);

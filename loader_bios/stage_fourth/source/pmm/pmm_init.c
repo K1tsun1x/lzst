@@ -1,6 +1,7 @@
 #include <pmm/pmm.h>
 
 uintptr_t PMM_FIRST_REGION_BASE_ADDRESS = 0;
+spinlock_t __PMM_LOCK = SPINLOCK_INIT;
 
 size_t pmm_init(
 	e820_reg_t* regs,

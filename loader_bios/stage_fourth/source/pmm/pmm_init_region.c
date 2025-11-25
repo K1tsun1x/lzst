@@ -29,6 +29,7 @@ bool pmm_init_region(
 	pmm_reg->length = length;
 	pmm_reg->num_free_pages = num_pages;
 	pmm_reg->num_busy_pages = 0;
+	pmm_reg->num_total_pages = num_pages;
 	pmm_reg->bitmap_offset = first_bitmap - base;
 	pmm_reg->page_info_offset = first_page_info - base;
 	pmm_reg->page_offset = first_page - base;

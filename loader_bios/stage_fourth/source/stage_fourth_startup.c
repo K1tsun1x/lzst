@@ -234,6 +234,59 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 
 		first_pmm_reg = (pmm_reg_t*)(uintptr_t)first_pmm_reg->next_reg_address;
 	} while(first_pmm_reg != NULL);
+
+	tty_puts("Allocate A: ", GFX_UNPACK_COLOR(tty_frg_color), GFX_UNPACK_COLOR(tty_bkg_color), true);
+	void* a = pmm_allocate_memory(0x1234, 0);
+	tty_printf(
+		GFX_UNPACK_COLOR(tty_frg_color),
+		GFX_UNPACK_COLOR(tty_bkg_color),
+		false,
+		"Base: \x1b[96m%#010x\x1b[0m\n",
+		(uintptr_t)a
+	);
+	memset(a, 0xff, 0x1234);
+
+	tty_puts("Allocate B: ", GFX_UNPACK_COLOR(tty_frg_color), GFX_UNPACK_COLOR(tty_bkg_color), true);
+	void* b = pmm_allocate_memory(0x5678, 0);
+	tty_printf(
+		GFX_UNPACK_COLOR(tty_frg_color),
+		GFX_UNPACK_COLOR(tty_bkg_color),
+		false,
+		"Base: \x1b[96m%#010x\x1b[0m\n",
+		(uintptr_t)b
+	);
+	memset(b, 0xcc, 0x5678);
+
+	tty_puts("Free A: ", GFX_UNPACK_COLOR(tty_frg_color), GFX_UNPACK_COLOR(tty_bkg_color), true);
+	tty_printf(
+		GFX_UNPACK_COLOR(tty_frg_color),
+		GFX_UNPACK_COLOR(tty_bkg_color),
+		false,
+		"Result: \x1b[96m%u\x1b[0m\n",
+		pmm_free_memory(a)
+	);
+
+	tty_puts("Allocate C: ", GFX_UNPACK_COLOR(tty_frg_color), GFX_UNPACK_COLOR(tty_bkg_color), true);
+	void* c = pmm_allocate_memory(0x123, 0);
+	tty_printf(
+		GFX_UNPACK_COLOR(tty_frg_color),
+		GFX_UNPACK_COLOR(tty_bkg_color),
+		false,
+		"Base: \x1b[96m%#010x\x1b[0m\n",
+		(uintptr_t)c
+	);
+	memset(c, 0xdd, 0x123);
+
+	tty_puts("Reallocate B: ", GFX_UNPACK_COLOR(tty_frg_color), GFX_UNPACK_COLOR(tty_bkg_color), true);
+	b = pmm_reallocate_memory(b, 0x200000, 0);
+	memset(b, 0xaa, 0x200000);
+	tty_printf(
+		GFX_UNPACK_COLOR(tty_frg_color),
+		GFX_UNPACK_COLOR(tty_bkg_color),
+		false,
+		"Base: \x1b[96m%#010x\x1b[0m\n",
+		(uintptr_t)b
+	);
 	
 	panic_halt();
 }
