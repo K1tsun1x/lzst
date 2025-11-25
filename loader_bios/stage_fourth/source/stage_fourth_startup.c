@@ -6,6 +6,7 @@
 #include <pmm/pmm.h>
 #include <fpu/fpu.h>
 #include <paging/paging.h>
+#include <acpi/acpi.h>
 
 extern uint32_t __PTR_BASE__[];
 extern uint32_t __PTR_END__[];
@@ -168,6 +169,115 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		BOOT_INFO.video_mode.height,
 		BOOT_INFO.video_mode.depth
 	);
+
+	uint64_t acpi_rsdp_xsdp_address = (uint64_t)(uintptr_t)acpi_find_rsdp_xsdp();
+	if (!acpi_rsdp_xsdp_address) {
+		tty_prints(
+			"RSDP/XSDP: cunable to find RSDP table",
+			GFX_UNPACK_COLOR(tty_frg_color),
+			GFX_UNPACK_COLOR(tty_bkg_color),
+			false
+		);
+
+		panic_halt();
+	}
+
+	acpi_rsdp_t* acpi_rsdp = (acpi_rsdp_t*)(uintptr_t)acpi_rsdp_xsdp_address;
+	acpi_xsdp_t* acpi_xsdp = (acpi_xsdp_t*)(uintptr_t)acpi_rsdp_xsdp_address;
+	if (acpi_rsdp->revision >= 2) {
+		acpi_xsdt_t* acpi_xsdt = (acpi_xsdt_t*)(uintptr_t)acpi_xsdp->xsdt_address;
+		if (!acpi_validate_sdt_header(&acpi_xsdt->header, ACPI_XSDT_SIGNATURE)) {
+			tty_prints_negative("Error: invalid XSDT");
+			panic_halt();
+		}
+
+		BOOT_INFO.acpi_xsdp_address = acpi_rsdp_xsdp_address;
+		BOOT_INFO.acpi_xsdp_version = acpi_xsdp->revision;
+		BOOT_INFO.acpi_xsdt_address = acpi_xsdp->rsdt_address;
+		BOOT_INFO.acpi_fadt_address = (uint64_t)(uintptr_t)acpi_find_sdt64(acpi_xsdt, ACPI_FADT_SIGNATURE);
+		BOOT_INFO.acpi_madt_address = (uint64_t)(uintptr_t)acpi_find_sdt64(acpi_xsdt, ACPI_MADT_SIGNATURE);
+
+		tty_printf(
+			GFX_UNPACK_COLOR(tty_frg_color),
+			GFX_UNPACK_COLOR(tty_bkg_color),
+			false,
+			"XSDP:\t\t\t\t\x1b[96m%#010x%08x\x1b[0m\n",
+			(uint32_t)(BOOT_INFO.acpi_xsdp_address >> 32),
+			(uint32_t)(BOOT_INFO.acpi_xsdp_address & 0xffffffff)
+		);
+
+		tty_printf(
+			GFX_UNPACK_COLOR(tty_frg_color),
+			GFX_UNPACK_COLOR(tty_bkg_color),
+			false,
+			"XSDT:\t\t\t\t\x1b[96m%#010x%08x\x1b[0m\n",
+			(uint32_t)(BOOT_INFO.acpi_xsdt_address >> 32),
+			(uint32_t)(BOOT_INFO.acpi_xsdt_address & 0xffffffff)
+		);
+
+		tty_printf(
+			GFX_UNPACK_COLOR(tty_frg_color),
+			GFX_UNPACK_COLOR(tty_bkg_color),
+			false,
+			"FADT:\t\t\t\t\x1b[96m%#010x%08x\x1b[0m\n",
+			(uint32_t)(BOOT_INFO.acpi_fadt_address >> 32),
+			(uint32_t)(BOOT_INFO.acpi_fadt_address & 0xffffffff)
+		);
+
+		tty_printf(
+			GFX_UNPACK_COLOR(tty_frg_color),
+			GFX_UNPACK_COLOR(tty_bkg_color),
+			false,
+			"MADT:\t\t\t\t\x1b[96m%#010x%08x\x1b[0m\n",
+			(uint32_t)(BOOT_INFO.acpi_madt_address >> 32),
+			(uint32_t)(BOOT_INFO.acpi_madt_address & 0xffffffff)
+		);
+	}
+	else {
+		acpi_rsdt_t* acpi_rsdt = (acpi_rsdt_t*)acpi_rsdp->rsdt_address;
+		if (!acpi_validate_sdt_header(&acpi_rsdt->header, ACPI_RSDT_SIGNATURE)) {
+			tty_prints_negative("Error: invalid RSDT");
+			panic_halt();
+		}
+
+		BOOT_INFO.acpi_rsdp_address = (uintptr_t)acpi_rsdp_xsdp_address;
+		BOOT_INFO.acpi_rsdp_version = acpi_rsdp->revision;
+		BOOT_INFO.acpi_rsdt_address = (uintptr_t)acpi_rsdp->rsdt_address;
+		BOOT_INFO.acpi_fadt_address = (uint64_t)(uintptr_t)acpi_find_sdt32(acpi_rsdt, ACPI_FADT_SIGNATURE);
+		BOOT_INFO.acpi_madt_address = (uint64_t)(uintptr_t)acpi_find_sdt32(acpi_rsdt, ACPI_MADT_SIGNATURE);
+
+		tty_printf(
+			GFX_UNPACK_COLOR(tty_frg_color),
+			GFX_UNPACK_COLOR(tty_bkg_color),
+			false,
+			"RSDP:\t\t\t\t\x1b[96m%#08x\x1b[0m\n",
+			BOOT_INFO.acpi_rsdp_address
+		);
+
+		tty_printf(
+			GFX_UNPACK_COLOR(tty_frg_color),
+			GFX_UNPACK_COLOR(tty_bkg_color),
+			false,
+			"RSDT:\t\t\t\t\x1b[96m%#08x\x1b[0m\n",
+			BOOT_INFO.acpi_rsdt_address
+		);
+
+		tty_printf(
+			GFX_UNPACK_COLOR(tty_frg_color),
+			GFX_UNPACK_COLOR(tty_bkg_color),
+			false,
+			"FADT:\t\t\t\t\x1b[96m%#08x\x1b[0m\n",
+			(uint32_t)(BOOT_INFO.acpi_fadt_address & 0xffffffff)
+		);
+
+		tty_printf(
+			GFX_UNPACK_COLOR(tty_frg_color),
+			GFX_UNPACK_COLOR(tty_bkg_color),
+			false,
+			"MADT:\t\t\t\t\x1b[96m%#08x\x1b[0m\n",
+			(uint32_t)(BOOT_INFO.acpi_fadt_address & 0xffffffff)
+		);
+	}
 
 	const e820_reg_t RESERVED_REGS[] = {
 		{	// IVT, BDA

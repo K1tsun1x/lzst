@@ -15,7 +15,7 @@ typedef struct _boot_info_t {
 	bool				fpu_present;
 	
 	/**
-	 * No SSE:	0
+	 * No SSE:	0x00
 	 * SSE:		0x01
 	 * SSE2:	0x02
 	 * SSE3:	0x03
@@ -29,6 +29,15 @@ typedef struct _boot_info_t {
 
 	e820_reg_t*			memory_map;
 	size_t				memory_map_length;
+
+	uint32_t			acpi_rsdp_address;
+	uint64_t			acpi_xsdp_address;
+	uint8_t				acpi_rsdp_version;
+	uint8_t				acpi_xsdp_version;
+	uint32_t			acpi_rsdt_address;
+	uint64_t			acpi_xsdt_address;
+	uint64_t			acpi_fadt_address;
+	uint64_t			acpi_madt_address;
 } boot_info_t, *pboot_info_t;
 
 #endif
