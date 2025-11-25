@@ -27,10 +27,18 @@
 #define ALIGNED(...)				__attribute__((__aligned__(__VA_ARGS__)))
 
 typedef __CHAR32_TYPE__				char32_t;
+
+#ifdef __x86_64__
+#define X64
+#endif
 #elif defined(_MSC_VER)
 #define ALIGNED(...)				__declspec(align(__VA_ARGS__))
 
 typedef int							char32_t;
+
+#ifdef _M_X64
+#define X64
+#endif
 #endif
 
 /**

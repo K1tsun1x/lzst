@@ -25,10 +25,10 @@ OBJ_C_FOURTH_STAGE=$(patsubst %.c, %.lb4.o, $(SRC_C_FOURTH_STAGE))
 OBJ_ASM_FOURTH_STAGE=$(patsubst %.asm, %.lb4.o, $(SRC_ASM_FOURTH_STAGE))
 
 FLAGS_CC_THIRD_STAGE=-Wall -Wextra -ffreestanding -O0 -m16 -std=c17 -I $(DIR_STAGE_THIRD)/include
-FLAGS_LD_THIRD_STAGE=-Wall -Wextra -ffreestanding -O0 -m16 -nostdlib -T $(DIR_STAGE_THIRD)/stage_third.ld # -lgcc
+FLAGS_LD_THIRD_STAGE=-Wall -Wextra -ffreestanding -O0 -m16 -nostdlib -T $(DIR_STAGE_THIRD)/stage_third.ld -lgcc
 
 FLAGS_CC_FOURTH_STAGE=-Wall -Wextra -ffreestanding -O0 -m32 -std=c17 -I $(DIR_STAGE_FOURTH)/include
-FLAGS_LD_FOURTH_STAGE=-Wall -Wextra -ffreestanding -O0 -m32 -nostdlib -T $(DIR_STAGE_FOURTH)/stage_fourth.ld # -lgcc
+FLAGS_LD_FOURTH_STAGE=-Wall -Wextra -ffreestanding -O0 -m32 -nostdlib -T $(DIR_STAGE_FOURTH)/stage_fourth.ld -lgcc
 
 all:	build run clean
 

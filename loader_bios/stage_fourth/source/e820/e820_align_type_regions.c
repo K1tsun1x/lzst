@@ -6,7 +6,7 @@ size_t e820_align_type_regions(e820_reg_t* regs, size_t num_regs, uint64_t align
 		
 		const uint64_t old_base = regs[i].base;
 		uint64_t old_end = old_base + regs[i].length;
-		if (old_end < old_base) old_end = (uint64_t)-1ULL;
+		if (old_end < old_base) old_end = UINT64_MAX;
 
 		const uint64_t start = ALIGN_UP_P2(old_base, alignment);
 		const uint64_t end = ALIGN_DOWN_P2(old_end, alignment);

@@ -211,21 +211,29 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		sizeof(RESERVED_REGS) / sizeof(RESERVED_REGS[0])
 	);
 
-	tty_puts("Normalized memory map:", GFX_UNPACK_COLOR(tty_frg_color), GFX_UNPACK_COLOR(tty_bkg_color), true);
-	for (size_t i = 0; i < BOOT_INFO.memory_map_length; i++) {
+	if (PMM_FIRST_REGION_BASE_ADDRESS == 0) {
+		tty_prints_negative("Error: not enough memory!");
+		panic_halt();
+	}
+
+	tty_puts("Normalized usable memory map:", GFX_UNPACK_COLOR(tty_frg_color), GFX_UNPACK_COLOR(tty_bkg_color), true);
+	pmm_reg_t* first_pmm_reg = (pmm_reg_t*)PMM_FIRST_REGION_BASE_ADDRESS;
+	do {
 		tty_printf(
 			GFX_UNPACK_COLOR(tty_frg_color),
 			GFX_UNPACK_COLOR(tty_bkg_color),
 			false,
-			"%u)\tBase=\x1b[96m%#010x%08x\x1b[0m, Length=\x1b[96m%#010x%08x\x1b[0m, Type=\x1b[94m%u\x1b[0m\n",
-			i + 1,
-			(uint32_t)(BOOT_INFO.memory_map[i].base >> 32),
-			(uint32_t)(BOOT_INFO.memory_map[i].base & 0xffffffff),
-			(uint32_t)(BOOT_INFO.memory_map[i].length >> 32),
-			(uint32_t)(BOOT_INFO.memory_map[i].length & 0xffffffff),
-			BOOT_INFO.memory_map[i].type
+			"Base: \x1b[96m%#010x\x1b[0m, Length: \x1b[96m%#010x\x1b[0m, Pages: \x1b[96m%xh\x1b[0m\n",
+			// (uint32_t)(first_pmm_reg->base_address >> 32),
+			(uint32_t)(first_pmm_reg->base_address & 0xffffffff),
+			// (uint32_t)(first_pmm_reg->length >> 32),
+			(uint32_t)(first_pmm_reg->length & 0xffffffff),
+			(uint32_t)first_pmm_reg->num_free_pages,
+			(uint32_t)(first_pmm_reg->next_reg_address)
 		);
-	}
+
+		first_pmm_reg = (pmm_reg_t*)(uintptr_t)first_pmm_reg->next_reg_address;
+	} while(first_pmm_reg != NULL);
 	
 	panic_halt();
 }

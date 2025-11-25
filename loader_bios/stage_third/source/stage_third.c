@@ -1,5 +1,6 @@
 #include <min_stdio.h>
 #include <boot_info.h>
+#include <align.h>
 #include <vga.h>
 #include <a20.h>
 #include <i8042.h>
@@ -199,7 +200,7 @@ EXTERN_C void stage_third_startup(uint8_t drive) {
 		}
 	}
 
-	BOOT_INFO.memory_map = (boot_mem_reg_t*)(end + 0x1000);
+	BOOT_INFO.memory_map = (boot_mem_reg_t*)(ALIGN_UP_P2(end, 0x1000));
 
 	printf("Memory map:\t\t\t\t\t");
 	if (!e820_get_map(BOOT_INFO.memory_map, 100, &BOOT_INFO.memory_map_length)) {
