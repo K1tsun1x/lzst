@@ -13,7 +13,7 @@ void tty_scroll_down_color(
 	for (size_t i = 0; i < num_lines; i++) {
 		int src_y = TTY_CELL_Y;
 		int dst_y = 0;
-		const int end_src_y = (TTY_NUM_LINES - 1) * TTY_CELL_Y;
+		const int end_src_y = TTY_NUM_LINES * TTY_CELL_Y;
 		for (; src_y < end_src_y;) {
 			gfx_copy_rectangle(
 				0, src_y,
@@ -25,6 +25,6 @@ void tty_scroll_down_color(
 			dst_y += TTY_CELL_Y;
 		}
 
-		gfx_fill_rectangle(0, dst_y, GFX_VIDEO_MODE.width, TTY_CELL_Y, bkg_r, bkg_g, bkg_b);
+		gfx_fill_rectangle(0, (TTY_NUM_LINES - 1) * TTY_CELL_Y, GFX_VIDEO_MODE.width, TTY_CELL_Y, bkg_r, bkg_g, bkg_b);
 	}
 }

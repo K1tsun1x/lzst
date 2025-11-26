@@ -1,45 +1,16 @@
-#include <boot/boot_info.h>
-#include <asm.h>
-#include <cpuid486/cpuid486.h>
-#include <gfx/gfx.h>
-#include <tty/tty.h>
-#include <pmm/pmm.h>
-#include <fpu/fpu.h>
-#include <paging/paging.h>
-#include <acpi/acpi.h>
-#include <gdt/gdt.h>
-
-extern uint32_t __PTR_BASE__[];
-extern uint32_t __PTR_END__[];
-
-extern gfx_video_mode_t GFX_VIDEO_MODE;
-static boot_info_t BOOT_INFO;
-static paging_pde_t ALIGNED(0x1000) PDE[PAGING_NUM_DIRECTORY_ENTRIES];
-
-static gdt32_t ALIGNED(16) GDT_FOURTH_STAGE[] = {
-	GDT32_STATIC(0, 0, 0, 0),
-	GDT32_STATIC(
-		0xfffff,
-		0,
-		GDT_ACCESS_READABLE_WRITEABLE | GDT_ACCESS_EXECUTABLE | GDT_ACCESS_NOT_SYSTEM | GDT_ACCESS_PRESENT,
-		GDT_FLAG_SIZE | GDT_FLAG_GRANULARITY
-	),
-	GDT32_STATIC(
-		0xfffff,
-		0,
-		GDT_ACCESS_READABLE_WRITEABLE | GDT_ACCESS_NOT_SYSTEM | GDT_ACCESS_PRESENT,
-		GDT_FLAG_SIZE | GDT_FLAG_GRANULARITY
-	)
-};
-
-static gdt_descriptor32_t ALIGNED(16) GDT_DESCRIPTOR_FOURTH_STAGE = GDT_DESCRIPTOR_STATIC(
-	sizeof(GDT_FOURTH_STAGE),
-	GDT_FOURTH_STAGE
-);
+#include <main/stage_fourth_startup.h>
 
 void stage_fourth_startup(boot_info_t* bootloader_info) {
 	BOOT_INFO = *bootloader_info;
-	gdt_reload(&GDT_DESCRIPTOR_FOURTH_STAGE);
+
+	reload_gdtr(&GDTR);
+	exception_init(IDT);
+
+	pic_remap(32, 40);
+	pic_mask_all_irqs();
+	irq_init(IDT);
+	load_idtr(&IDTR);
+	sti();
 
 	gfx_init(&BOOT_INFO.video_mode);
 	tty_init(80, 25, 2, 2, GFX_UNPACK_COLOR(GFX_COLOR_LIGHT_GRAY), 0x18, 0x18, 0x18);
@@ -312,3 +283,37 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 	
 	panic_halt();
 }
+
+boot_info_t BOOT_INFO;
+
+gdt32_t ALIGNED(16) GDT[3] = {
+	GDT32_STATIC(0, 0, 0, 0),
+	GDT32_STATIC(
+		0xfffff,
+		0,
+		GDT_ACCESS_READABLE_WRITEABLE | GDT_ACCESS_EXECUTABLE | GDT_ACCESS_NOT_SYSTEM | GDT_ACCESS_PRESENT,
+		GDT_FLAG_SIZE | GDT_FLAG_GRANULARITY
+	),
+	GDT32_STATIC(
+		0xfffff,
+		0,
+		GDT_ACCESS_READABLE_WRITEABLE | GDT_ACCESS_NOT_SYSTEM | GDT_ACCESS_PRESENT,
+		GDT_FLAG_SIZE | GDT_FLAG_GRANULARITY
+	)
+};
+
+gdtr32_t ALIGNED(16) GDTR = GDTR_STATIC(
+	sizeof(GDT),
+	(uintptr_t)&GDT[0]
+);
+
+idt32_t ALIGNED(16) IDT[256] = { 0 };
+
+idtr32_t ALIGNED(16) IDTR = IDTR_STATIC(
+	sizeof(IDT),
+	(uintptr_t)&IDT[0]
+);
+
+uintptr_t ISRS[32] = { 0 };
+
+paging_pde_t ALIGNED(0x1000) PDE[PAGING_NUM_DIRECTORY_ENTRIES] = { 0 };

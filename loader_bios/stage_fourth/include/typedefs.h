@@ -6,6 +6,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#if !defined(__GNUC__) && !defined(__clang__)
+#error This compiler is not supported!
+#endif
+
 #ifdef __cplusplus
 #define EXTERN_C					extern "C"
 #define CONST_CAST(type, ...)		const_cast<type>(__VA_ARGS__)
@@ -20,26 +24,14 @@
 
 #define ARRAY_LENGTH_VARIABLE		1
 
-#if defined(__GNUC__) || defined(__clang__)
-#define __GNUC_CLANG__
 #define __stdcall					__attribute__((__stdcall__))
 #define __cdecl						__attribute__((__cdecl__))
 #define ALIGNED(...)				__attribute__((__aligned__(__VA_ARGS__)))
 
-typedef __CHAR32_TYPE__				char32_t;
-
 #ifdef __x86_64__
 #define X64
 #endif
-#elif defined(_MSC_VER)
-#define ALIGNED(...)				__declspec(align(__VA_ARGS__))
 
-typedef int							char32_t;
-
-#ifdef _M_X64
-#define X64
-#endif
-#endif
 
 /**
  * @note Calling convetion
@@ -47,5 +39,7 @@ typedef int							char32_t;
  * `LOADERCALL` (stack-based; callee preserves all registers except EAX/AX/AL, which is used for the return value)
  */
 #define LOADERCALL
+
+typedef __CHAR32_TYPE__				char32_t;
 
 #endif

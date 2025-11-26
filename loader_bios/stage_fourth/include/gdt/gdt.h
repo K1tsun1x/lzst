@@ -2,9 +2,7 @@
 #ifndef __GDT_H
 #define __GDT_H
 
-#include "gdt_access.h"
-#include "gdt_flag.h"
-#include "gdt_descriptor.h"
+#include "gdtr.h"
 
 #define GDT32_STATIC(limit, base, access, flags)		{ \
 	(limit) & 0xffff, \
@@ -25,6 +23,19 @@
 	(base) >> 32, \
 	0 \
 }
+
+#define GDT_ACCESS_ACCESSED								1
+#define GDT_ACCESS_READABLE_WRITEABLE					2
+#define GDT_ACCESS_DIRECTION							4
+#define GDT_ACCESS_EXECUTABLE							8
+#define GDT_ACCESS_NOT_SYSTEM							16
+#define GDT_ACCESS_DPL0									32
+#define GDT_ACCESS_DPL1									64
+#define GDT_ACCESS_PRESENT								128
+
+#define GDT_FLAG_LONG_MODE_CODE							2
+#define GDT_FLAG_SIZE									4
+#define GDT_FLAG_GRANULARITY							8
 
 #pragma pack(push, 1)
 typedef struct _gdt32_t {
@@ -47,11 +58,6 @@ typedef struct _gdt64_t {
 	uint32_t			reserved;
 } gdt64_t;
 #pragma pack(pop)
-
-/**
- * @warning gdt[0] = empty, gdt[1] = code, gdt[2] = data(!)
- */
-EXTERN_C void LOADERCALL gdt_reload(const void* gdt_descriptor);
 
 static inline void gdt_init32(
 	gdt32_t* dst,

@@ -13,7 +13,7 @@ void tty_scroll_up_color(
 	for (size_t i = 0; i < num_lines; i++) {
 		int src_y = 0;
 		int dst_y = TTY_CELL_Y;
-		const int end_src_y = (TTY_NUM_LINES - 1) * TTY_CELL_Y;
+		const int end_src_y = TTY_NUM_LINES * TTY_CELL_Y;
 		for (; src_y < end_src_y;) {
 			gfx_copy_rectangle(
 				0, src_y,
