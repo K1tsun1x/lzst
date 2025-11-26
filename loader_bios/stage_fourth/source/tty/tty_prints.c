@@ -1,16 +1,16 @@
 #include <tty/tty.h>
 
-int tty_prints(
-	const char* s,
-	uint8_t frg_r, uint8_t frg_g, uint8_t frg_b,
-	uint8_t bkg_r, uint8_t bkg_g, uint8_t bkg_b,
-	bool fill_bkg
-) {
-	int printed_chars = 0;
-	for (; *s;) {
-		tty_putchar((int)(*s++), frg_r, frg_g, frg_b, bkg_r, bkg_g, bkg_b, fill_bkg);
-		++printed_chars;
-	}
+extern uint8_t TTY_FRG_RED;
+extern uint8_t TTY_FRG_GREEN;
+extern uint8_t TTY_FRG_BLUE;
+extern uint8_t TTY_BKG_RED;
+extern uint8_t TTY_BKG_GREEN;
+extern uint8_t TTY_BKG_BLUE;
 
-	return printed_chars;
+int tty_prints(const char* s) {
+	return tty_prints_color(
+		s, 
+		TTY_FRG_RED, TTY_FRG_GREEN, TTY_FRG_BLUE,
+		TTY_BKG_RED, TTY_BKG_GREEN, TTY_BKG_BLUE
+	);
 }

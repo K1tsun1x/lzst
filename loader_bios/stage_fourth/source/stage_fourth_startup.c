@@ -20,7 +20,7 @@ static paging_pde_t ALIGNED(0x1000) PDE[PAGING_NUM_DIRECTORY_ENTRIES];
 void stage_fourth_startup(boot_info_t* bootloader_info) {
 	BOOT_INFO = *bootloader_info;
 	gfx_init(&BOOT_INFO.video_mode);
-	tty_init(80, 25, 2, 2);
+	tty_init(80, 25, 2, 2, GFX_UNPACK_COLOR(GFX_COLOR_LIGHT_GRAY), 0x18, 0x18, 0x18);
 
 	bool cpuid_prsnt = cpuid486_present();
 	bool fpu_prsnt = false;
@@ -84,7 +84,7 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 			if (num_lines > 20) num_lines = 20;
 		}
 
-		tty_init(num_chars_per_line, num_lines, 2, 2);
+		tty_init(num_chars_per_line, num_lines, 2, 2, GFX_UNPACK_COLOR(GFX_COLOR_LIGHT_GRAY), 0x18, 0x18, 0x18);
 	}
 	else {
 		// FIXME: not implemented yet...
@@ -92,77 +92,51 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		panic_halt();
 	}
 
-	const gfx_color_t tty_bkg_color = GFX_PACK_COLOR(0x18, 0x18, 0x18);
-	const gfx_color_t tty_frg_color = GFX_COLOR_LIGHT_GRAY;
-	gfx_fill_rectangle(0, 0, GFX_VIDEO_MODE.width, GFX_VIDEO_MODE.height, GFX_UNPACK_COLOR(tty_bkg_color));
-	tty_puts("Welcome to LZST bootloader!", 0xff, 0x7f, 0, GFX_UNPACK_COLOR(tty_bkg_color), true);
-
-	tty_printf(
-		GFX_UNPACK_COLOR(tty_frg_color),
-		GFX_UNPACK_COLOR(tty_bkg_color),
-		false,
-		"Boot drive:\t\t\t\x1b[94m%#x\x1b[0m\n", BOOT_INFO.boot_drive
+	gfx_fill_rectangle(0, 0, GFX_VIDEO_MODE.width, GFX_VIDEO_MODE.height, 0x18, 0x18, 0x18);
+	tty_puts_color(
+		"Welcome to LZST bootloader!",
+		0xff, 0x7f, 0,
+		0x18, 0x18, 0x18
 	);
 
-	tty_prints("VGA:\t\t\t\t", GFX_UNPACK_COLOR(tty_frg_color), GFX_UNPACK_COLOR(tty_bkg_color), true);
+	tty_printf("Boot drive:\t\t\t\x1b[94m%#x\x1b[0m\n", BOOT_INFO.boot_drive);
+
+	tty_prints("VGA:\t\t\t\t");
 	if (BOOT_INFO.vga_present) tty_prints_positive("[PRESENT]");
 	else tty_prints_negative("[NOT PRESENT]");
 	
-	tty_prints("\nVBE:\t\t\t\t", GFX_UNPACK_COLOR(tty_frg_color), GFX_UNPACK_COLOR(tty_bkg_color), true);
+	tty_prints("\nVBE:\t\t\t\t");
 	if (BOOT_INFO.vbe_present) tty_prints_positive("[PRESENT]");
 	else tty_prints_negative("[NOT PRESENT]");
 	
-	tty_prints("\ni8042 controller:\t", GFX_UNPACK_COLOR(tty_frg_color), GFX_UNPACK_COLOR(tty_bkg_color), true);
+	tty_prints("\ni8042 controller:\t");
 	if (BOOT_INFO.i8042_present) tty_prints_positive("[PRESENT]");
 	else tty_prints_negative("[NOT PRESENT]");
 	
-	tty_prints("\nCPUID:\t\t\t\t", GFX_UNPACK_COLOR(tty_frg_color), GFX_UNPACK_COLOR(tty_bkg_color), true);
+	tty_prints("\nCPUID:\t\t\t\t");
 	if (BOOT_INFO.cpuid_present) tty_prints_positive("[PRESENT]");
 	else tty_prints_negative("[NOT PRESENT]");
 	
-	tty_prints("\nFPU:\t\t\t\t", GFX_UNPACK_COLOR(tty_frg_color), GFX_UNPACK_COLOR(tty_bkg_color), true);
+	tty_prints("\nFPU:\t\t\t\t");
 	if (BOOT_INFO.fpu_present) tty_prints_positive("[PRESENT]");
 	else tty_prints_negative("[NOT PRESENT]");
 	
-	tty_prints("\nSSE version:\t\t", GFX_UNPACK_COLOR(tty_frg_color), GFX_UNPACK_COLOR(tty_bkg_color), true);
+	tty_prints("\nSSE version:\t\t");
 	if (!BOOT_INFO.sse_version) tty_prints_neutral("[NONE]");
 	else {
-		if (BOOT_INFO.sse_version < 0x10) tty_printf(
-			GFX_UNPACK_COLOR(tty_frg_color),
-			GFX_UNPACK_COLOR(tty_bkg_color),
-			false,
-			"\x1b[92m%u\x1b[0m", BOOT_INFO.sse_version
-		);
+		if (BOOT_INFO.sse_version < 0x10) tty_printf("\x1b[92m%u\x1b[0m", BOOT_INFO.sse_version);
 		else {
-			if (BOOT_INFO.sse_version == 0x41) tty_printf(
-				GFX_UNPACK_COLOR(tty_frg_color),
-				GFX_UNPACK_COLOR(tty_bkg_color),
-				false,
-				"\x1b[92m4.1\x1b[0m"
-			);
-			else if (BOOT_INFO.sse_version == 0x42) tty_printf(
-				GFX_UNPACK_COLOR(tty_frg_color),
-				GFX_UNPACK_COLOR(tty_bkg_color),
-				false,
-				"\x1b[92m4.2\x1b[0m"
-			);
-			else tty_printf(
-				GFX_UNPACK_COLOR(tty_frg_color),
-				GFX_UNPACK_COLOR(tty_bkg_color),
-				false,
-				"\x1b[92m4.2+\x1b[0m"
-			);
+			if (BOOT_INFO.sse_version == 0x41) tty_printf("\x1b[92m4.1\x1b[0m");
+			else if (BOOT_INFO.sse_version == 0x42) tty_printf("\x1b[92m4.2\x1b[0m");
+			else tty_printf("\x1b[92m4.2+\x1b[0m");
 		}
 	}
 	
-	tty_prints("\nAVX:\t\t\t\t", GFX_UNPACK_COLOR(tty_frg_color), GFX_UNPACK_COLOR(tty_bkg_color), true);
+	tty_prints("\nAVX:\t\t\t\t");
 	if (BOOT_INFO.avx_present) tty_prints_positive("[PRESENT]");
 	else tty_prints_negative("[NOT PRESENT]");
 	
 	tty_printf(
-		GFX_UNPACK_COLOR(tty_frg_color),
-		GFX_UNPACK_COLOR(tty_bkg_color),
-		false,
 		"\nVideo:\t\t\t\tmode=\x1b[96m%xh\x1b[0m (\x1b[96m%u\x1b[0mx\x1b[96m%u\x1b[0m \x1b[94m%ubpp\x1b[0m)\n",
 		BOOT_INFO.video_mode.number,
 		BOOT_INFO.video_mode.width,
@@ -172,12 +146,7 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 
 	uint64_t acpi_rsdp_xsdp_address = (uint64_t)(uintptr_t)acpi_find_rsdp_xsdp();
 	if (!acpi_rsdp_xsdp_address) {
-		tty_prints(
-			"RSDP/XSDP: cunable to find RSDP table",
-			GFX_UNPACK_COLOR(tty_frg_color),
-			GFX_UNPACK_COLOR(tty_bkg_color),
-			false
-		);
+		tty_prints("RSDP/XSDP: unable to find RSDP table");
 
 		panic_halt();
 	}
@@ -198,36 +167,24 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		BOOT_INFO.acpi_madt_address = (uint64_t)(uintptr_t)acpi_find_sdt64(acpi_xsdt, ACPI_MADT_SIGNATURE);
 
 		tty_printf(
-			GFX_UNPACK_COLOR(tty_frg_color),
-			GFX_UNPACK_COLOR(tty_bkg_color),
-			false,
 			"XSDP:\t\t\t\t\x1b[96m%#010x%08x\x1b[0m\n",
 			(uint32_t)(BOOT_INFO.acpi_xsdp_address >> 32),
 			(uint32_t)(BOOT_INFO.acpi_xsdp_address & 0xffffffff)
 		);
 
 		tty_printf(
-			GFX_UNPACK_COLOR(tty_frg_color),
-			GFX_UNPACK_COLOR(tty_bkg_color),
-			false,
 			"XSDT:\t\t\t\t\x1b[96m%#010x%08x\x1b[0m\n",
 			(uint32_t)(BOOT_INFO.acpi_xsdt_address >> 32),
 			(uint32_t)(BOOT_INFO.acpi_xsdt_address & 0xffffffff)
 		);
 
 		tty_printf(
-			GFX_UNPACK_COLOR(tty_frg_color),
-			GFX_UNPACK_COLOR(tty_bkg_color),
-			false,
 			"FADT:\t\t\t\t\x1b[96m%#010x%08x\x1b[0m\n",
 			(uint32_t)(BOOT_INFO.acpi_fadt_address >> 32),
 			(uint32_t)(BOOT_INFO.acpi_fadt_address & 0xffffffff)
 		);
 
 		tty_printf(
-			GFX_UNPACK_COLOR(tty_frg_color),
-			GFX_UNPACK_COLOR(tty_bkg_color),
-			false,
 			"MADT:\t\t\t\t\x1b[96m%#010x%08x\x1b[0m\n",
 			(uint32_t)(BOOT_INFO.acpi_madt_address >> 32),
 			(uint32_t)(BOOT_INFO.acpi_madt_address & 0xffffffff)
@@ -247,33 +204,21 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		BOOT_INFO.acpi_madt_address = (uint64_t)(uintptr_t)acpi_find_sdt32(acpi_rsdt, ACPI_MADT_SIGNATURE);
 
 		tty_printf(
-			GFX_UNPACK_COLOR(tty_frg_color),
-			GFX_UNPACK_COLOR(tty_bkg_color),
-			false,
 			"RSDP:\t\t\t\t\x1b[96m%#08x\x1b[0m\n",
 			BOOT_INFO.acpi_rsdp_address
 		);
 
 		tty_printf(
-			GFX_UNPACK_COLOR(tty_frg_color),
-			GFX_UNPACK_COLOR(tty_bkg_color),
-			false,
 			"RSDT:\t\t\t\t\x1b[96m%#08x\x1b[0m\n",
 			BOOT_INFO.acpi_rsdt_address
 		);
 
 		tty_printf(
-			GFX_UNPACK_COLOR(tty_frg_color),
-			GFX_UNPACK_COLOR(tty_bkg_color),
-			false,
 			"FADT:\t\t\t\t\x1b[96m%#08x\x1b[0m\n",
 			(uint32_t)(BOOT_INFO.acpi_fadt_address & 0xffffffff)
 		);
 
 		tty_printf(
-			GFX_UNPACK_COLOR(tty_frg_color),
-			GFX_UNPACK_COLOR(tty_bkg_color),
-			false,
 			"MADT:\t\t\t\t\x1b[96m%#08x\x1b[0m\n",
 			(uint32_t)(BOOT_INFO.acpi_fadt_address & 0xffffffff)
 		);
@@ -329,13 +274,10 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		panic_halt();
 	}
 
-	tty_puts("Normalized usable memory map:", GFX_UNPACK_COLOR(tty_frg_color), GFX_UNPACK_COLOR(tty_bkg_color), true);
+	tty_puts("Normalized usable memory map:");
 	pmm_reg_t* first_pmm_reg = (pmm_reg_t*)PMM_FIRST_REGION_BASE_ADDRESS;
 	do {
 		tty_printf(
-			GFX_UNPACK_COLOR(tty_frg_color),
-			GFX_UNPACK_COLOR(tty_bkg_color),
-			false,
 			"Base: \x1b[96m%#010x\x1b[0m, Length: \x1b[96m%#010x\x1b[0m, Pages: \x1b[96m%xh\x1b[0m\n",
 			// (uint32_t)(first_pmm_reg->base_address >> 32),
 			(uint32_t)(first_pmm_reg->base_address & 0xffffffff),
@@ -354,7 +296,7 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 	paging_load_directory(PDE);
 	paging_enable();
 
-	tty_puts("Paging enabled", GFX_UNPACK_COLOR(tty_frg_color), GFX_UNPACK_COLOR(tty_bkg_color), true);
+	tty_puts("Paging enabled");
 	
 	panic_halt();
 }

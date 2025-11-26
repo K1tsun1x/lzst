@@ -6,34 +6,28 @@ static const char* __STR_MISSING_WIDTH = "[missing width]";
 static const char* __STR_UNSUPPORTED_FORMAT_TYPE = "[unsupported format type]";
 static const char* __STR_UNSUPPORTED_RADIX = "[unsupported radix]";
 
-int tty_vprintf(
-	uint8_t frg_r, uint8_t frg_g, uint8_t frg_b,
-	uint8_t bkg_r, uint8_t bkg_g, uint8_t bkg_b,
-	bool fill_bkg,
-	const char* s, va_list args
-) {
+extern uint8_t TTY_FRG_RED;
+extern uint8_t TTY_FRG_GREEN;
+extern uint8_t TTY_FRG_BLUE;
+extern uint8_t TTY_BKG_RED;
+extern uint8_t TTY_BKG_GREEN;
+extern uint8_t TTY_BKG_BLUE;
+
+int tty_vprintf(const char* s, va_list args) {
+	gfx_color_t frg_color = GFX_PACK_COLOR(TTY_FRG_RED, TTY_FRG_GREEN, TTY_FRG_BLUE);
+	gfx_color_t bkg_color = GFX_PACK_COLOR(TTY_BKG_RED, TTY_BKG_GREEN, TTY_BKG_BLUE);
 	char buffer[(sizeof(uint64_t) << 3) + 2];
 	size_t printed_chars = 0;
-	gfx_color_t frg_color = GFX_PACK_COLOR(frg_r, frg_g, frg_b);
-	gfx_color_t bkg_color = GFX_PACK_COLOR(bkg_r, bkg_g, bkg_b);
-	gfx_color_t tmp_frg;
-	gfx_color_t tmp_bkg;
 	for (; *s; s++) {
 		if (*s == '\x1b') {
 			++s;
 			if (*s != '[') {
-				tty_prints(
-					__STR_UNSUPPORTED_ATTRIBUTE_TYPE,
-					frg_color.r, frg_color.g, frg_color.b,
-					bkg_color.r, bkg_color.g, bkg_color.b,
-					fill_bkg
-				);
-
+				tty_prints_color(__STR_UNSUPPORTED_ATTRIBUTE_TYPE, GFX_UNPACK_COLOR(frg_color), GFX_UNPACK_COLOR(bkg_color));
 				continue;
 			}
 			
-			tmp_frg = frg_color;
-			tmp_bkg = bkg_color;
+			gfx_color_t tmp_frg = frg_color;
+			gfx_color_t tmp_bkg = bkg_color;
 			do {
 				++s;
 				if (*s == '0') tmp_frg = GFX_COLOR_LIGHT_GRAY;
@@ -48,13 +42,11 @@ int tty_vprintf(
 					else if (*s == '6') tmp_frg = GFX_COLOR_CYAN;
 					else if (*s == '7') tmp_frg = GFX_COLOR_DARK_GRAY;
 					else {
-						tty_prints(
+						tty_prints_color(
 							__STR_UNSUPPORTED_ATTRIBUTE,
-							frg_color.r, frg_color.g, frg_color.b,
-							bkg_color.r, bkg_color.g, bkg_color.b,
-							fill_bkg
+							GFX_UNPACK_COLOR(frg_color),
+							GFX_UNPACK_COLOR(bkg_color)
 						);
-
 						continue;
 					}
 				}
@@ -69,13 +61,11 @@ int tty_vprintf(
 					else if (*s == '6') tmp_frg = GFX_COLOR_LIGHT_CYAN;
 					else if (*s == '7') tmp_frg = GFX_COLOR_WHITE;
 					else {
-						tty_prints(
+						tty_prints_color(
 							__STR_UNSUPPORTED_ATTRIBUTE,
-							frg_color.r, frg_color.g, frg_color.b,
-							bkg_color.r, bkg_color.g, bkg_color.b,
-							fill_bkg
+							GFX_UNPACK_COLOR(frg_color),
+							GFX_UNPACK_COLOR(bkg_color)
 						);
-
 						continue;
 					}
 				}
@@ -90,26 +80,22 @@ int tty_vprintf(
 					else if (*s == '6') tmp_bkg = GFX_COLOR_CYAN;
 					else if (*s == '7') tmp_bkg = GFX_COLOR_DARK_GRAY;
 					else {
-						tty_prints(
+						tty_prints_color(
 							__STR_UNSUPPORTED_ATTRIBUTE,
-							frg_color.r, frg_color.g, frg_color.b,
-							bkg_color.r, bkg_color.g, bkg_color.b,
-							fill_bkg
+							GFX_UNPACK_COLOR(frg_color),
+							GFX_UNPACK_COLOR(bkg_color)
 						);
-
 						continue;
 					}
 				}
 				else if (*s == '1') {
 					++s;
 					if (*s != '0') {
-						tty_prints(
+						tty_prints_color(
 							__STR_UNSUPPORTED_ATTRIBUTE,
-							frg_color.r, frg_color.g, frg_color.b,
-							bkg_color.r, bkg_color.g, bkg_color.b,
-							fill_bkg
+							GFX_UNPACK_COLOR(frg_color),
+							GFX_UNPACK_COLOR(bkg_color)
 						);
-
 						continue;
 					}
 
@@ -123,24 +109,20 @@ int tty_vprintf(
 					else if (*s == '6') tmp_bkg = GFX_COLOR_LIGHT_CYAN;
 					else if (*s == '7') tmp_bkg = GFX_COLOR_WHITE;
 					else {
-						tty_prints(
+						tty_prints_color(
 							__STR_UNSUPPORTED_ATTRIBUTE,
-							frg_color.r, frg_color.g, frg_color.b,
-							bkg_color.r, bkg_color.g, bkg_color.b,
-							fill_bkg
+							GFX_UNPACK_COLOR(frg_color),
+							GFX_UNPACK_COLOR(bkg_color)
 						);
-
 						continue;
 					}
 				}
 				else {
-					tty_prints(
+					tty_prints_color(
 						__STR_UNSUPPORTED_ATTRIBUTE,
-						frg_color.r, frg_color.g, frg_color.b,
-						bkg_color.r, bkg_color.g, bkg_color.b,
-						fill_bkg
+						GFX_UNPACK_COLOR(frg_color),
+						GFX_UNPACK_COLOR(bkg_color)
 					);
-					
 					continue;
 				}
 
@@ -148,13 +130,11 @@ int tty_vprintf(
 			} while(*s == ';');
 
 			if (*s != 'm') {
-				tty_prints(
+				tty_prints_color(
 					__STR_UNSUPPORTED_ATTRIBUTE_TYPE,
-					frg_color.r, frg_color.g, frg_color.b,
-					bkg_color.r, bkg_color.g, bkg_color.b,
-					fill_bkg
+					GFX_UNPACK_COLOR(frg_color),
+					GFX_UNPACK_COLOR(bkg_color)
 				);
-
 				--s;
 			}
 			else {
@@ -166,24 +146,22 @@ int tty_vprintf(
 		}
 		
 		if (*s != '%') {
-			tty_putchar(
+			tty_putchar_color(
 				(int)*s,
-				frg_color.r, frg_color.g, frg_color.b,
-				bkg_color.r, bkg_color.g, bkg_color.b,
-				fill_bkg
+				GFX_UNPACK_COLOR(frg_color),
+				GFX_UNPACK_COLOR(bkg_color)
 			);
-			
+
 			++printed_chars;
 			continue;
 		}
 
 		s++;
 		if (*s == '%') {
-			tty_putchar(
-				(int)'%',
-				frg_color.r, frg_color.g, frg_color.b,
-				bkg_color.r, bkg_color.g, bkg_color.b,
-				fill_bkg
+			tty_putchar_color(
+				'%',
+				GFX_UNPACK_COLOR(frg_color),
+				GFX_UNPACK_COLOR(bkg_color)
 			);
 
 			++printed_chars;
@@ -206,11 +184,10 @@ int tty_vprintf(
 				width = (size_t)va_arg(args, unsigned long);
 				++s;
 			}
-			else if (*s < '0' || *s > '9') tty_prints(
+			else if (*s < '0' || *s > '9') tty_prints_color(
 				__STR_MISSING_WIDTH,
-				frg_color.r, frg_color.g, frg_color.b,
-				bkg_color.r, bkg_color.g, bkg_color.b,
-				fill_bkg
+				GFX_UNPACK_COLOR(frg_color),
+				GFX_UNPACK_COLOR(bkg_color)
 			);
 			else for (; *s >= '0' && *s <= '9'; ++s) width = width * 10 + (size_t)(*s - '0');
 		}
@@ -249,21 +226,19 @@ int tty_vprintf(
 		}
 		else if (*s == 's') is_string = true;
 		else if (*s == 'c') is_char = true;
-		else tty_prints(
+		else tty_prints_color(
 			__STR_UNSUPPORTED_FORMAT_TYPE,
-			frg_color.r, frg_color.g, frg_color.b,
-			bkg_color.r, bkg_color.g, bkg_color.b,
-			fill_bkg
+			GFX_UNPACK_COLOR(frg_color),
+			GFX_UNPACK_COLOR(bkg_color)
 		);
 		
 		size_t tmp_len = 0;
 		if (is_number) {
 			if (!is_unsigned && signed_number < 0) {
-				tty_putchar(
+				tty_putchar_color(
 					'-',
-					frg_color.r, frg_color.g, frg_color.b,
-					bkg_color.r, bkg_color.g, bkg_color.b,
-					fill_bkg
+					GFX_UNPACK_COLOR(frg_color),
+					GFX_UNPACK_COLOR(bkg_color)
 				);
 
 				tmp_len += 1;
@@ -273,40 +248,35 @@ int tty_vprintf(
 
 			if (flag_hash) {
 				if (radix == 16) {
-					tty_prints(
+					tty_prints_color(
 						"0x",
-						frg_color.r, frg_color.g, frg_color.b,
-						bkg_color.r, bkg_color.g, bkg_color.b,
-						fill_bkg
+						GFX_UNPACK_COLOR(frg_color),
+						GFX_UNPACK_COLOR(bkg_color)
 					);
-
 					tmp_len += 2;
 				}
 				else if (radix == 8) {
-					tty_putchar(
+					tty_putchar_color(
 						'0',
-						frg_color.r, frg_color.g, frg_color.b,
-						bkg_color.r, bkg_color.g, bkg_color.b,
-						fill_bkg
+						GFX_UNPACK_COLOR(frg_color),
+						GFX_UNPACK_COLOR(bkg_color)
 					);
 
 					tmp_len += 1;
 				}
 				else if (radix == 2) {
-					tty_prints(
+					tty_prints_color(
 						"0b",
-						frg_color.r, frg_color.g, frg_color.b,
-						bkg_color.r, bkg_color.g, bkg_color.b,
-						fill_bkg
+						GFX_UNPACK_COLOR(frg_color),
+						GFX_UNPACK_COLOR(bkg_color)
 					);
-					
+
 					tmp_len += 2;
 				}
-				else if (radix != 10) tty_prints(
+				else if (radix != 10) tty_prints_color(
 					__STR_UNSUPPORTED_RADIX,
-					frg_color.r, frg_color.g, frg_color.b,
-					bkg_color.r, bkg_color.g, bkg_color.b,
-					fill_bkg
+					GFX_UNPACK_COLOR(frg_color),
+					GFX_UNPACK_COLOR(bkg_color)
 				);
 			}
 
@@ -329,25 +299,22 @@ int tty_vprintf(
 			if (width_type == WIDTH_TYPE_SPACES) c = ' ';
 			else if (width_type == WIDTH_TYPE_ZEROS) c = '0';
 
-			for (; tmp_len < width; tmp_len++) tty_putchar(
+			for (; tmp_len < width; tmp_len++) tty_putchar_color(
 				c,
-				frg_color.r, frg_color.g, frg_color.b,
-				bkg_color.r, bkg_color.g, bkg_color.b,
-				fill_bkg
+				GFX_UNPACK_COLOR(frg_color),
+				GFX_UNPACK_COLOR(bkg_color)
 			);
 		}
 
-		if (is_char) tty_putchar(
+		if (is_char) tty_putchar_color(
 			buffer[0],
-			frg_color.r, frg_color.g, frg_color.b,
-			bkg_color.r, bkg_color.g, bkg_color.b,
-			fill_bkg
+			GFX_UNPACK_COLOR(frg_color),
+			GFX_UNPACK_COLOR(bkg_color)
 		);
-		else tty_prints(
+		else tty_prints_color(
 			buffer,
-			frg_color.r, frg_color.g, frg_color.b,
-			bkg_color.r, bkg_color.g, bkg_color.b,
-			fill_bkg
+			GFX_UNPACK_COLOR(frg_color),
+			GFX_UNPACK_COLOR(bkg_color)
 		);
 
 		printed_chars += tmp_len;
