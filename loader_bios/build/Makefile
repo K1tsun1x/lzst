@@ -95,3 +95,4 @@ clean:
 
 run:
 	qemu-system-x86_64 -monitor stdio -m 4G -enable-kvm -cpu qemu64,+sse4.2,+avx -drive format=raw,file=$(RESULT) -D $(DIR_BUILD)/debug.txt -d cpu_reset
+#	qemu-system-i386 -monitor stdio -m 4G -enable-kvm -drive format=raw,file=$(RESULT) -D $(DIR_BUILD)/debug.txt -d cpu_reset

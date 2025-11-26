@@ -14,7 +14,7 @@ typedef struct _acpi_madt_t {
 	uint32_t					local_apic_address;
 	uint32_t					flags;
 	
-	void*						records;
+	// void*					records;
 } acpi_madt_t;
 #pragma pack(pop)
 

@@ -7,18 +7,40 @@
 #include <fpu/fpu.h>
 #include <paging/paging.h>
 #include <acpi/acpi.h>
+#include <gdt/gdt.h>
 
 extern uint32_t __PTR_BASE__[];
 extern uint32_t __PTR_END__[];
 
 extern gfx_video_mode_t GFX_VIDEO_MODE;
-
 static boot_info_t BOOT_INFO;
-
 static paging_pde_t ALIGNED(0x1000) PDE[PAGING_NUM_DIRECTORY_ENTRIES];
+
+static gdt32_t ALIGNED(16) GDT_FOURTH_STAGE[] = {
+	GDT32_STATIC(0, 0, 0, 0),
+	GDT32_STATIC(
+		0xfffff,
+		0,
+		GDT_ACCESS_READABLE_WRITEABLE | GDT_ACCESS_EXECUTABLE | GDT_ACCESS_NOT_SYSTEM | GDT_ACCESS_PRESENT,
+		GDT_FLAG_SIZE | GDT_FLAG_GRANULARITY
+	),
+	GDT32_STATIC(
+		0xfffff,
+		0,
+		GDT_ACCESS_READABLE_WRITEABLE | GDT_ACCESS_NOT_SYSTEM | GDT_ACCESS_PRESENT,
+		GDT_FLAG_SIZE | GDT_FLAG_GRANULARITY
+	)
+};
+
+static gdt_descriptor32_t ALIGNED(16) GDT_DESCRIPTOR_FOURTH_STAGE = GDT_DESCRIPTOR_STATIC(
+	sizeof(GDT_FOURTH_STAGE),
+	GDT_FOURTH_STAGE
+);
 
 void stage_fourth_startup(boot_info_t* bootloader_info) {
 	BOOT_INFO = *bootloader_info;
+	gdt_reload(&GDT_DESCRIPTOR_FOURTH_STAGE);
+
 	gfx_init(&BOOT_INFO.video_mode);
 	tty_init(80, 25, 2, 2, GFX_UNPACK_COLOR(GFX_COLOR_LIGHT_GRAY), 0x18, 0x18, 0x18);
 
@@ -177,18 +199,6 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 			(uint32_t)(BOOT_INFO.acpi_xsdt_address >> 32),
 			(uint32_t)(BOOT_INFO.acpi_xsdt_address & 0xffffffff)
 		);
-
-		tty_printf(
-			"FADT:\t\t\t\t\x1b[96m%#010x%08x\x1b[0m\n",
-			(uint32_t)(BOOT_INFO.acpi_fadt_address >> 32),
-			(uint32_t)(BOOT_INFO.acpi_fadt_address & 0xffffffff)
-		);
-
-		tty_printf(
-			"MADT:\t\t\t\t\x1b[96m%#010x%08x\x1b[0m\n",
-			(uint32_t)(BOOT_INFO.acpi_madt_address >> 32),
-			(uint32_t)(BOOT_INFO.acpi_madt_address & 0xffffffff)
-		);
 	}
 	else {
 		acpi_rsdt_t* acpi_rsdt = (acpi_rsdt_t*)acpi_rsdp->rsdt_address;
@@ -212,17 +222,19 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 			"RSDT:\t\t\t\t\x1b[96m%#08x\x1b[0m\n",
 			BOOT_INFO.acpi_rsdt_address
 		);
-
-		tty_printf(
-			"FADT:\t\t\t\t\x1b[96m%#08x\x1b[0m\n",
-			(uint32_t)(BOOT_INFO.acpi_fadt_address & 0xffffffff)
-		);
-
-		tty_printf(
-			"MADT:\t\t\t\t\x1b[96m%#08x\x1b[0m\n",
-			(uint32_t)(BOOT_INFO.acpi_fadt_address & 0xffffffff)
-		);
 	}
+
+	tty_printf(
+		"FADT:\t\t\t\t\x1b[96m%#010x%08x\x1b[0m\n",
+		(uint32_t)(BOOT_INFO.acpi_fadt_address >> 32),
+		(uint32_t)(BOOT_INFO.acpi_fadt_address & 0xffffffff)
+	);
+
+	tty_printf(
+		"MADT:\t\t\t\t\x1b[96m%#010x%08x\x1b[0m\n",
+		(uint32_t)(BOOT_INFO.acpi_madt_address >> 32),
+		(uint32_t)(BOOT_INFO.acpi_madt_address & 0xffffffff)
+	);
 
 	const e820_reg_t RESERVED_REGS[] = {
 		{	// IVT, BDA

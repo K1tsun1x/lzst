@@ -6,7 +6,7 @@
 
 #define GDT_DESCRIPTOR_STATIC(size, offset)	{\
 	(uint16_t)((size) - 1), \
-	(uint32_t)(offset) \
+	(uintptr_t)(offset) \
 }
 
 #pragma pack(push, 1)

@@ -48,6 +48,11 @@ typedef struct _gdt64_t {
 } gdt64_t;
 #pragma pack(pop)
 
+/**
+ * @warning gdt[0] = empty, gdt[1] = code, gdt[2] = data(!)
+ */
+EXTERN_C void LOADERCALL gdt_reload(const void* gdt_descriptor);
+
 static inline void gdt_init32(
 	gdt32_t* dst,
 	uint32_t limit,
