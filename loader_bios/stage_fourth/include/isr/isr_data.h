@@ -24,5 +24,6 @@ typedef struct _isr_data_t {
 	size_t	cs;
 	size_t	flags;
 } isr_data_t;
+#pragma pack(pop)
 
 #endif

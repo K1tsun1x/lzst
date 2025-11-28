@@ -20,11 +20,18 @@
 		- [x] Detect and set an appropriate video mode (VBE or VGA)
 		- [x] Set up the GDT
 	- [ ] **Stage 4**
+		- [x] Reload GDT
+		- [x] Initialize IDT
+		- [x] Initialize ISRs
 		- [x] Check for CPUID support
 		- [x] Check for FPU presence
 		- [x] Detect SSE version (none / SSE1 / SSE2)
 		- [x] Initialize FPU and SSE (if available)
 		- [x] Initialize the TTY driver with the appropriate resolution
+		- [x] Normalize memory map
+		- [x] Initialize PMM (Physical Memory Manager)
+		- [x] Parse ACPI tables (FADT, MADT)
+		- [x] Initialize LAPIC->IOAPIC->LAPIC Timer or PIC->PIT (if APIC is not present)
 		- [ ] ...
 - [ ] **LZST Kernel**
 	- [ ] …

@@ -26,6 +26,7 @@ IRQ					12
 IRQ					13
 IRQ					14
 IRQ					15
+IRQ					192					; LAPIC Timer (LAPIC_TIMER_VECTOR = 224 = 32 + 192)
 
 irq_global_handler_stub:
 	pusha

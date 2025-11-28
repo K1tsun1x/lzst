@@ -1,6 +1,6 @@
 #include <acpi/acpi.h>
 
-void* acpi_find_rsdp_xsdp(void) {
+void* acpi_find_rsdp(void) {
 	const uint32_t ebda_base = (uint32_t)(((uint32_t)*((uint16_t*)0x040e)) << 4);
 	const uint32_t ebda_end = ebda_base + 0x20000;
 	uint32_t address = ALIGN_UP_P2(ebda_base, 16);

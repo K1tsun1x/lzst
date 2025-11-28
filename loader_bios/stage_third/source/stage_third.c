@@ -258,7 +258,7 @@ EXTERN_C void stage_third_startup(uint8_t drive) {
 		if (BOOT_INFO.video_mode.number == 0x13) BOOT_INFO.video_mode.indexed = true;
 		video_mode_set = vga_set_video_mode((uint8_t)BOOT_INFO.video_mode.number);
 	}
-
+	
 	if (!video_mode_set) {
 		printf("\x1b[91;107mError: failed to set video mode #%xh\x1b[0m\n", BOOT_INFO.video_mode.number);
 		panic_halt();

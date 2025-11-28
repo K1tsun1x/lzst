@@ -16,6 +16,13 @@
 #include <exception/exception.h>
 #include <irq/irq.h>
 #include <pic/pic.h>
+#include <virt-int-ctrl/virt-int-ctrl.h>
+#include <msr/msr.h>
+#include <acpi/acpi_madt_ioapic.h>
+#include <acpi/acpi_madt_lapic.h>
+#include <lapic/lapic.h>
+#include <ioapic/ioapic.h>
+#include <dynarr/dynarr.h>
 
 extern uint32_t __PTR_BASE__[];
 extern uint32_t __PTR_END__[];

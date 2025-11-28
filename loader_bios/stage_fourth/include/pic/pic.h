@@ -23,4 +23,6 @@ void pic_mask_all_irqs(void);
 void pic_unmask_all_irqs(void);
 void pic_send_eoi(uint8_t index);
 
+void pic_init(void);
+
 #endif

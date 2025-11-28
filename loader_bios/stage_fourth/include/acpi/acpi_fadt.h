@@ -10,7 +10,7 @@
 
 #pragma pack(push, 1)
 typedef struct _acpi_fadt_t {
-	acpi_sdt_header_t			sdt_header;
+	acpi_sdt_header_t			header;
 	uint32_t					firmware_ctrl;
     uint32_t					dsdt;
 

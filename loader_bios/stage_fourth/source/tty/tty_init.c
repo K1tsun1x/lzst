@@ -46,5 +46,5 @@ void tty_init(
 	TTY_BKG_GREEN = bkg_g;
 	TTY_BKG_BLUE = bkg_b;
 
-	gfx_fill_rectangle(0, 0, GFX_VIDEO_MODE.width, GFX_VIDEO_MODE.height, 0x10, 0x10, 0x10);
+	gfx_fill_rectangle(0, 0, GFX_VIDEO_MODE.width, GFX_VIDEO_MODE.height, bkg_r, bkg_g, bkg_b);
 }

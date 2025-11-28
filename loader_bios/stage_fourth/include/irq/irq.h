@@ -5,8 +5,13 @@
 #include <isr/isr.h>
 #include <idt/idt.h>
 #include <asm.h>
+#include <virt-timer/virt-timer.h>
+#include <virt-int-ctrl/virt-int-ctrl.h>
 
-#define NUM_IRQS						16
+#define NUM_IRQS						256-32
+
+#define PIT_IRQ							0
+#define LAPIC_TIMER_VECTOR				0xe0
 
 #define IRQ_PIT							0
 #define IRQ_KBD							1
@@ -25,9 +30,33 @@
 #define IRQ_PRIMARY_ATA					14
 #define IRQ_SECONDARY_ATA				15
 
+#define IRQ_INFO_TRIGGER_MODE_EDGE		0
+#define IRQ_INFO_TRIGGER_MODE_LEVEL		1
+
+#define IRQ_INFO_POLARITY_ACTIVE_HIGH	0
+#define IRQ_INFO_POLARITY_ACTIVE_LOW	1
+
+typedef struct _irq_info_t {
+	uint8_t			irq;
+	uint8_t			vector;
+	/*
+		0 - edge
+		1 - level
+		IRQ_INFO_TRIGGER_MODE_*
+	*/
+	uint8_t			trigger_mode;
+	/*
+		0 - active high
+		1 - active low
+		IRQ_INFO_POLARITY_*
+	*/
+	uint8_t			polarity;
+} irq_info_t;
+
 EXTERN_C void irq_global_handler(isr_data_t* data);
 void irq_init(void* idt);
 
 extern isr_t IRQ_HANDLERS[NUM_IRQS];
+extern irq_info_t IRQ_INFOS[NUM_IRQS];
 
 #endif

@@ -120,4 +120,17 @@ static inline void invlpg(uintptr_t virt) {
 	__asm__ __volatile__("invlpg (%0)"::"r"(virt):"memory");
 }
 
+static inline uint64_t rdmsr(uint32_t index) {
+	uint32_t low;
+	uint32_t high;
+    __asm__ __volatile__( "rdmsr":"=a"(low), "=d"(high):"c"(index));
+	return ((uint64_t)high << 32) | low;
+}
+
+static inline void wrmsr(uint32_t index, uint64_t value) {
+	uint32_t low = (uint32_t)(value & 0xffffffff);
+    uint32_t high = (uint32_t)(value >> 32);
+    __asm__ __volatile__("wrmsr"::"c"(index), "a"(low), "d"(high));
+}
+
 #endif
