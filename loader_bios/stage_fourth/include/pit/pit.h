@@ -52,13 +52,13 @@
 #define PIT_HW_FREQ						(3579545 / 3)
 #define PIT_SW_FREQ						1000
 
-uint16_t pit_calc_divisor(uint32_t ms);
+uint16_t pit_calc_divisor(uint32_t tick_ms);
 uint16_t pit_read_count(void);
 
 void pit_init(
 	uint8_t operating_mode,
 	uint8_t channel,
-	uint16_t ms
+	uint16_t tick_ms
 );
 
 static inline void pit_oneshot(uint16_t ms) {

@@ -24,6 +24,8 @@
 #include <ioapic/ioapic.h>
 #include <dynarr/dynarr.h>
 
+#define TIMER_TICK_MS				1
+
 extern uint32_t __PTR_BASE__[];
 extern uint32_t __PTR_END__[];
 

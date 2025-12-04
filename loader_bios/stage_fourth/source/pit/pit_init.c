@@ -3,9 +3,9 @@
 void pit_init(
 	uint8_t operating_mode,
 	uint8_t channel,
-	uint16_t ms
+	uint16_t tick_ms
 ) {
-	uint16_t divisor = pit_calc_divisor(ms);
+	uint16_t divisor = pit_calc_divisor(tick_ms);
 	outb(PIT_PORT_COMMAND, PIT_COMMAND_BINARY | operating_mode | PIT_COMMAND_ACCESS_BOTH | channel);
 
 	uint16_t port;

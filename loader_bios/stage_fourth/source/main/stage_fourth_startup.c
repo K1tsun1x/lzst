@@ -274,7 +274,7 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		irq_set(PIT_IRQ, virt_timer_irq_handler);
 		irq_set(LAPIC_TIMER_VECTOR - 32, virt_timer_irq_handler);
 		virt_int_ctrl_unmask_irq(pit_irq_info.irq_remapped);
-		lapic_timer_init(LAPIC_TIMER_VECTOR);
+		lapic_timer_init(LAPIC_TIMER_VECTOR, TIMER_TICK_MS);
 		virt_int_ctrl_mask_irq(pit_irq_info.irq_remapped);
 		irq_set(PIT_IRQ, NULL);
 	}
@@ -285,9 +285,11 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		irq_get_info(PIT_IRQ, &pit_irq_info);
 		irq_set(PIT_IRQ, virt_timer_irq_handler);
 		
-		pit_init(PIT_COMMAND_SQUARE_WAVE, PIT_COMMAND_CHNL0, 10);
+		pit_init(PIT_COMMAND_SQUARE_WAVE, PIT_COMMAND_CHNL0, TIMER_TICK_MS);
 		virt_int_ctrl_unmask_irq(pit_irq_info.irq_remapped);
 	}
+
+	virt_timer_set_tick_ms(TIMER_TICK_MS);
 
 	tty_prints("Paging:\t\t\t\t\t");
 	// Identity mapping (1:1)

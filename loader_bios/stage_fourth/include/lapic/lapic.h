@@ -65,7 +65,7 @@ void lapic_eoi(uint8_t index);
 uint32_t lapic_timer_calibrate(void);
 
 void lapic_init(void);
-uint32_t lapic_timer_init(uint8_t vector);
+uint32_t lapic_timer_init(uint8_t vector, uint16_t tick_ms);
 
 static inline void lapic_enable_svr(uint8_t index) {
 	lapic_write(LAPIC_REG_SVR, index | 0x100);

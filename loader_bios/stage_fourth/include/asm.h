@@ -96,6 +96,22 @@ static inline void sti(void) {
 	__asm__ __volatile__("sti");
 }
 
+static inline void hlt(void) {
+	__asm__ __volatile__("hlt");
+}
+
+static inline void memory_barrier(void) {
+	__asm__ __volatile__("":::"memory");
+}
+
+static inline void lfence(void) {
+	__asm__ __volatile__("lfence");
+}
+
+static inline void mfence(void) {
+	__asm__ __volatile__("mfence");
+}
+
 static inline void xgetbv(uint32_t index, uint32_t* eax, uint32_t* edx) {
 	uint32_t ceax;
 	uint32_t cedx;
