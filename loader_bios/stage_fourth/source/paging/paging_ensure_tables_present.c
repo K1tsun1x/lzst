@@ -7,6 +7,7 @@ typedef struct _paging_allocated_entry_t {
 
 extern spinlock_t __PAGING_LOCK;
 
+// FIXME: no VMM_VIRT_TO_PHYS
 bool paging_ensure_tables_present(paging_pde_t* directory, size_t start_index, size_t count, uint32_t flags) {
 	const size_t end_index = start_index + count;
 	if (end_index > PAGING_NUM_DIRECTORY_ENTRIES) return false;
@@ -23,8 +24,7 @@ bool paging_ensure_tables_present(paging_pde_t* directory, size_t start_index, s
 
 	if (!allocated_entries) return false;
 
-	irq_flags_t irq_flags = irq_disable();
-	spinlock_acquire(&__PAGING_LOCK);
+	ENTER_CRITICAL_SECTION();
 
 	for (size_t i = start_index; tmp_count && i < PAGING_NUM_DIRECTORY_ENTRIES; i++) {
 		if (directory[i] & PAGING_PDE_FLAG_PRESENT) {
@@ -55,14 +55,12 @@ bool paging_ensure_tables_present(paging_pde_t* directory, size_t start_index, s
 
 		if (allocated_entries) pmm_free_memory(allocated_entries);
 
-		spinlock_release(&__PAGING_LOCK);
-		irq_restore(irq_flags);
+		EXIT_CRITICAL_SECTION();
 		return false;
 	}
 
 	if (allocated_entries) pmm_free_memory(allocated_entries);
 
-	spinlock_release(&__PAGING_LOCK);
-	irq_restore(irq_flags);
+	EXIT_CRITICAL_SECTION();
 	return true;
 }

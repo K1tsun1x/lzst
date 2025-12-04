@@ -1,8 +1,8 @@
 bits 32
 
-; void LOADERCALL reload_gdtr(const void* gdtr);
-global reload_gdtr
-reload_gdtr:
+; void LOADERCALL gdtr_load(const void* gdtr);
+global gdtr_load
+gdtr_load:
 	pushf
 	push ebx
 	mov ebx, [esp + 12]

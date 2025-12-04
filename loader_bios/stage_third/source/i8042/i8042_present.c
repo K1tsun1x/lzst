@@ -1,11 +1,6 @@
 #include <i8042.h>
 
-extern spinlock_t __I8042_SPINLOCK;
-
 bool i8042_present(void) {
-	spinlock_acquire(&__I8042_SPINLOCK);			// FIXME: makes no sense in single threaded mode
-	irq_flags_t irq_flags = irq_disable();
-
 	bool res = true;
 
 	i8042_disable_kbd();
@@ -18,8 +13,5 @@ bool i8042_present(void) {
 
 	i8042_enable_kbd();
 	i8042_enable_mouse();
-
-	irq_restore(irq_flags);
-	spinlock_release(&__I8042_SPINLOCK);			// FIXME: makes no sense in single threaded mode
 	return res;
 }

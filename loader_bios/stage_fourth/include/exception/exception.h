@@ -129,9 +129,10 @@
  */
 #define EXCEPTION_CP							21
 
-EXTERN_C void exception_global_handler(isr_data_t* data);
-void exception_init(void* idt);
+bool exception_set(size_t index, isr_t isr);
+bool exception_get(size_t index, isr_t* isr);
+void exceptions_init(void);
 
-extern isr_t EXCEPTION_HANDLERS[NUM_EXCEPTIONS];
+EXTERN_C void exception_global_handler(isr_data_t* data);
 
 #endif

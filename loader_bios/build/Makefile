@@ -16,13 +16,13 @@ RESULT=$(DIR_BUILD)/loader_bios.bin
 
 SRC_C_THIRD_STAGE=$(shell find $(DIR_STAGE_THIRD) -name *.c)
 SRC_ASM_THIRD_STAGE=$(shell find $(DIR_STAGE_THIRD) -name *.asm)
-OBJ_C_THIRD_STAGE=$(patsubst %.c, %.lb3.o, $(SRC_C_THIRD_STAGE))
-OBJ_ASM_THIRD_STAGE=$(patsubst %.asm, %.lb3.o, $(SRC_ASM_THIRD_STAGE))
+OBJ_C_THIRD_STAGE=$(patsubst %.c, %.lb3.c.o, $(SRC_C_THIRD_STAGE))
+OBJ_ASM_THIRD_STAGE=$(patsubst %.asm, %.lb3.asm.o, $(SRC_ASM_THIRD_STAGE))
 
 SRC_C_FOURTH_STAGE=$(shell find $(DIR_STAGE_FOURTH) -name *.c)
 SRC_ASM_FOURTH_STAGE=$(shell find $(DIR_STAGE_FOURTH) -name *.asm)
-OBJ_C_FOURTH_STAGE=$(patsubst %.c, %.lb4.o, $(SRC_C_FOURTH_STAGE))
-OBJ_ASM_FOURTH_STAGE=$(patsubst %.asm, %.lb4.o, $(SRC_ASM_FOURTH_STAGE))
+OBJ_C_FOURTH_STAGE=$(patsubst %.c, %.lb4.c.o, $(SRC_C_FOURTH_STAGE))
+OBJ_ASM_FOURTH_STAGE=$(patsubst %.asm, %.lb4.asm.o, $(SRC_ASM_FOURTH_STAGE))
 
 FLAGS_CC_THIRD_STAGE=-Wall -Wextra -ffreestanding -O0 -m16 -std=c17 -I $(DIR_STAGE_THIRD)/include
 FLAGS_LD_THIRD_STAGE=-Wall -Wextra -ffreestanding -O0 -m16 -nostdlib -T $(DIR_STAGE_THIRD)/stage_third.ld -lgcc
@@ -71,16 +71,16 @@ endif
 	numSectors=$$((($$neededSize / 512))) ; \
 	printf "%08x" $$numSectors | sed 's/\(..\)\(..\)\(..\)\(..\)/\4\3\2\1/' | xxd -r -p | dd of=$(RESULT_STAGE_FOURTH) bs=1 seek=8 conv=notrunc
 
-%.lb3.o:	%.c
+%.lb3.c.o:		%.c
 	$(CC) -c $< $(FLAGS_CC_THIRD_STAGE) -o $@
 
-%.lb3.o:	%.asm
+%.lb3.asm.o:	%.asm
 	$(AS) -felf $< -o $@
 
-%.lb4.o:	%.c
+%.lb4.c.o:		%.c
 	$(CC) -c $< $(FLAGS_CC_FOURTH_STAGE) -o $@
 
-%.lb4.o:	%.asm
+%.lb4.asm.o:	%.asm
 	$(AS) -felf $< -o $@
 
 clean:

@@ -1,6 +1,6 @@
 #include <exception/exception.h>
 
-isr_t EXCEPTION_HANDLERS[NUM_EXCEPTIONS] = { 0 };
+extern isr_t EXCEPTION_HANDLERS[NUM_EXCEPTIONS];
 
 EXTERN_C void exception_global_handler(isr_data_t* data) {
 	if (data->int_index >= NUM_EXCEPTIONS) return;

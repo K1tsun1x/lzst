@@ -5,7 +5,7 @@
 #include "acpi_sdt_header.h"
 #include "acpi_madt_lapic.h"
 #include "acpi_madt_ioapic.h"
-#include  "acpi_madt_ioapic_int_src_override.h"
+#include  "acpi_madt_ioapic_iso.h"
 
 #define ACPI_MADT_SIGNATURE							0x43495041
 

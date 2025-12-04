@@ -4,6 +4,7 @@
 
 #include <e820/e820.h>
 #include <spinlock/spinlock.h>
+#include <critical-section/critical-section.h>
 #include "pmm_reg.h"
 #include "pmm_page.h"
 
@@ -34,7 +35,7 @@ size_t pmm_compute_region_info(
 );
 
 void* pmm_allocate_memory(size_t size, uint64_t flags);
-bool pmm_free_memory(const void* ptr);
+size_t pmm_free_memory(const void* ptr);
 bool pmm_find_allocated_memory(void* ptr, pmm_reg_t** reg, size_t* index);
 void* pmm_reallocate_memory(void* ptr, size_t new_size, uint64_t new_flags);
 

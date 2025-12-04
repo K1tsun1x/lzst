@@ -45,16 +45,16 @@ status_t boot_info_parse_acpi_tables(boot_info_t* boot_info) {
 	acpi_madt_t* madt = (acpi_madt_t*)boot_info->acpi_madt_address;
 	boot_info->lapics = (boot_info_lapic_t*)dynarr_create(sizeof(boot_info_lapic_t), 0);
 	boot_info->ioapics = (boot_info_ioapic_t*)dynarr_create(sizeof(boot_info_ioapic_t), 0);
-	boot_info->ioapic_int_src_overrides = (boot_info_ioapic_int_src_override_t*)dynarr_create(sizeof(boot_info_ioapic_int_src_override_t), 0);
+	boot_info->ioapic_isos = (boot_info_ioapic_iso_t*)dynarr_create(sizeof(boot_info_ioapic_iso_t), 0);
 	if (
 		!boot_info->lapics ||
 		!boot_info->ioapics ||
-		!boot_info->ioapic_int_src_overrides
+		!boot_info->ioapic_isos
 	) return STATUS_NO_MEMORY;
 
 	boot_info->num_lapics = 0;
 	boot_info->num_ioapics = 0;
-	boot_info->num_ioapic_int_src_overrides = 0;
+	boot_info->num_ioapic_isos = 0;
 
 	acpi_madt_entry_header_t* entry = madt->entries;
 	const uint32_t bsp_lapic_id = lapic_read(LAPIC_REG_ID) << 24;
@@ -93,19 +93,19 @@ status_t boot_info_parse_acpi_tables(boot_info_t* boot_info) {
 				break;
 			}
 			case ACPI_MADT_ENTRY_TYPE_IOAPIC_INT_SRC_OVERRIDE: {
-				acpi_madt_ioapic_int_src_override_t* int_src_ovrd = (acpi_madt_ioapic_int_src_override_t*)entry;
+				acpi_madt_ioapic_iso_t* int_src_ovrd = (acpi_madt_ioapic_iso_t*)entry;
 
-				boot_info_ioapic_int_src_override_t el;
+				boot_info_ioapic_iso_t el;
 				el.bus = int_src_ovrd->bus_src;
 				el.irq = int_src_ovrd->irq_src;
 				el.gsi = int_src_ovrd->global_system_interrupt;
 				el.flags = int_src_ovrd->flags;
 
-				boot_info_ioapic_int_src_override_t* da = (boot_info_ioapic_int_src_override_t*)dynarr_append(boot_info->ioapic_int_src_overrides, &el);
+				boot_info_ioapic_iso_t* da = (boot_info_ioapic_iso_t*)dynarr_append(boot_info->ioapic_isos, &el);
 				if (!da) return STATUS_NO_MEMORY;
 
-				boot_info->ioapic_int_src_overrides = da;
-				boot_info->num_ioapic_int_src_overrides += 1;
+				boot_info->ioapic_isos = da;
+				boot_info->num_ioapic_isos += 1;
 				break;
 			}
 			default: break;

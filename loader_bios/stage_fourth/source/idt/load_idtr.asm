@@ -1,8 +1,8 @@
 bits 32
 
-; void LOADERCALL load_idtr(const void* idtr);
-global load_idtr
-load_idtr:
+; void LOADERCALL idtr_load(const void* idtr);
+global idtr_load
+idtr_load:
 	pushf
 	push ebx
 	

@@ -50,6 +50,8 @@
 #define IDT_FLAG_DPL1				4
 #define IDT_FLAG_PRESENT			8
 
+#define IDT_NUM_ENTRIES				256
+
 #pragma pack(push, 1)
 typedef struct _idt32_t {
 	uint16_t			offset_low;
@@ -74,12 +76,14 @@ typedef struct _idt64_t {
 } idt64_t;
 #pragma pack(pop)
 
-static inline void init_idt32(idt32_t* entry, uint32_t offset, uint16_t segment_selector, uint8_t type, uint8_t flags) {
-	entry->offset_low = (uint16_t)(offset & 0xffff);
-	entry->selector = segment_selector;
-	entry->reserved = 0;
-	entry->type_flags = ((flags & 0x0f) << 4) | (type & 0x0f);
-	entry->offset_high = (uint16_t)((offset) >> 16);
-}
+bool idt32_set_entry(
+	size_t index,
+	uint32_t offset, uint16_t segment_selector,
+	uint8_t type, uint8_t flags
+);
+
+bool idt32_get_entry(size_t index, idt32_t* entry);
+
+void idt32_init(void);
 
 #endif

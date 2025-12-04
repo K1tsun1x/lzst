@@ -4,10 +4,11 @@
 
 #include "acpi_sdt_header.h"
 
-#define ACPI_MADT_RECORD_TYPE_IOAPIC_NMI_SRC				3
+#define ACPI_MADT_RECORD_TYPE_IOAPIC_NSO				3
 
 #pragma pack(push, 1)
-typedef struct _acpi_madt_ioapic_int_src_override_t {
+// I/O APIC NMI Source Override
+typedef struct _acpi_madt_ioapic_nso_t {
 	uint8_t			entry_type;
 	uint8_t			record_length;
 
@@ -15,7 +16,7 @@ typedef struct _acpi_madt_ioapic_int_src_override_t {
 	uint8_t			reserved;
 	uint16_t		flags;
 	uint32_t		global_system_interrupt;
-} acpi_madt_ioapic_int_src_override_t;
+} acpi_madt_ioapic_nso_t;
 #pragma pack(pop)
 
 #endif

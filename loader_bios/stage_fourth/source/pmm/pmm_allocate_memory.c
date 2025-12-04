@@ -10,8 +10,7 @@ void* pmm_allocate_memory(
 ) {
 	if (!PMM_FIRST_REGION_BASE_ADDRESS || !size) return NULL;
 
-	irq_flags_t irq_flags = irq_disable();
-	spinlock_acquire(&__PMM_LOCK);
+	ENTER_CRITICAL_SECTION();
 
 	flags |= PMM_PAGE_FLAG_BUSY;
 
@@ -47,8 +46,7 @@ void* pmm_allocate_memory(
 					reg->num_free_pages -= count;
 					reg->num_busy_pages += count;
 
-					spinlock_release(&__PMM_LOCK);
-					irq_restore(irq_flags);
+					EXIT_CRITICAL_SECTION();
 					return (void*)(base_pages + PMM_PAGE_SIZE * i_start);
 				}
 
@@ -59,7 +57,6 @@ void* pmm_allocate_memory(
 		reg = (pmm_reg_t*)(uintptr_t)reg->next_reg_address;
 	}
 
-	spinlock_release(&__PMM_LOCK);
-	irq_restore(irq_flags);
+	EXIT_CRITICAL_SECTION();
 	return NULL;
 }

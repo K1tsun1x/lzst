@@ -2,15 +2,14 @@
 
 extern spinlock_t __PMM_LOCK;
 
-bool pmm_free_memory(const void* ptr) {
+size_t pmm_free_memory(const void* ptr) {
 	if (
 		!PMM_FIRST_REGION_BASE_ADDRESS ||
 		!ptr ||
 		(uintptr_t)ptr & (PMM_PAGE_SIZE - 1)
-	) return false;
+	) return 0;
 
-	irq_flags_t irq_flags = irq_disable();
-	spinlock_acquire(&__PMM_LOCK);
+	ENTER_CRITICAL_SECTION();
 
 	pmm_reg_t* reg = (pmm_reg_t*)PMM_FIRST_REGION_BASE_ADDRESS;
 	while (reg != NULL) {
@@ -43,12 +42,10 @@ bool pmm_free_memory(const void* ptr) {
 		reg->num_free_pages += num_pages_to_free;
 		reg->num_busy_pages -= num_pages_to_free;
 
-		spinlock_release(&__PMM_LOCK);
-		irq_restore(irq_flags);
-		return true;
+		EXIT_CRITICAL_SECTION();
+		return num_pages_to_free;
 	}
 
-	spinlock_release(&__PMM_LOCK);
-	irq_restore(irq_flags);
-	return false;
+	EXIT_CRITICAL_SECTION();
+	return 0;
 }

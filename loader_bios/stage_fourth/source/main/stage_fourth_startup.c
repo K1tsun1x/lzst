@@ -2,11 +2,11 @@
 
 void stage_fourth_startup(boot_info_t* bootloader_info) {
 	BOOT_INFO = *bootloader_info;
-	reload_gdtr(&GDTR);
-	exception_init(IDT);
+	gdtr_load(&GDTR);
 
-	irq_init(IDT);
-	load_idtr(&IDTR);
+	exceptions_init();
+	irqs_init();
+	idt32_init();
 
 	gfx_init(&BOOT_INFO.video_mode);
 	tty_init(80, 25, 2, 2, GFX_UNPACK_COLOR(GFX_COLOR_LIGHT_GRAY), 0x18, 0x18, 0x18);
@@ -220,25 +220,29 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		}
 
 		tty_puts("I/O APIC Interrupt Source Overrides:");
-		for (size_t i = 0; i < BOOT_INFO.num_ioapic_int_src_overrides; i++) {
+		for (size_t i = 0; i < BOOT_INFO.num_ioapic_isos; i++) {
 			tty_printf(
 				"%u) Bus=\x1b[96m%xh\x1b[0m, IRQ=\x1b[96m%02xh\x1b[0m, GSI=\x1b[96m%#010x\x1b[0m\n",
 				i + 1,
-				BOOT_INFO.ioapic_int_src_overrides[i].bus,
-				BOOT_INFO.ioapic_int_src_overrides[i].irq,
-				BOOT_INFO.ioapic_int_src_overrides[i].gsi
+				BOOT_INFO.ioapic_isos[i].bus,
+				BOOT_INFO.ioapic_isos[i].irq,
+				BOOT_INFO.ioapic_isos[i].gsi
 			);
 
 			if (i >= NUM_IRQS) continue;
 			
-			boot_info_ioapic_int_src_override_t* ioapiciso = &BOOT_INFO.ioapic_int_src_overrides[i];
-			IRQ_INFOS[ioapiciso->irq].vector = (uint8_t)ioapiciso->gsi;
+			boot_info_ioapic_iso_t* ioapiciso = &BOOT_INFO.ioapic_isos[i];
+			irq_info_t irq_info;
+			irq_get_info(ioapiciso->irq, &irq_info);
+			irq_info.irq_remapped = (uint8_t)ioapiciso->gsi;
 
-			if (ioapiciso->flags & 8) IRQ_INFOS[ioapiciso->irq].trigger_mode = IRQ_INFO_TRIGGER_MODE_LEVEL;
-			else IRQ_INFOS[ioapiciso->irq].trigger_mode = IRQ_INFO_TRIGGER_MODE_EDGE;
+			if (ioapiciso->flags & 8) irq_info.trigger_mode = IRQ_INFO_TRIGGER_MODE_LEVEL;
+			else irq_info.trigger_mode = IRQ_INFO_TRIGGER_MODE_EDGE;
 
-			if (ioapiciso->flags & 2) IRQ_INFOS[ioapiciso->irq].polarity = IRQ_INFO_POLARITY_ACTIVE_LOW;
-			else IRQ_INFOS[ioapiciso->irq].polarity = IRQ_INFO_POLARITY_ACTIVE_HIGH;
+			if (ioapiciso->flags & 2) irq_info.polarity = IRQ_INFO_POLARITY_ACTIVE_LOW;
+			else irq_info.polarity = IRQ_INFO_POLARITY_ACTIVE_HIGH;
+
+			irq_set_info(ioapiciso->irq, &irq_info);
 		}
 
 		virt_int_ctrl_mask_irq = ioapic_mask_irq;
@@ -265,19 +269,24 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 	if (BOOT_INFO.apic_present) {
 		tty_prints_positive("LAPIC, PIT\n");
 
-		IRQ_HANDLERS[IRQ_INFOS[PIT_IRQ].vector] = virt_timer_irq_handler;
-		IRQ_HANDLERS[LAPIC_TIMER_VECTOR - 32] = virt_timer_irq_handler;
-		virt_int_ctrl_unmask_irq(IRQ_INFOS[PIT_IRQ].vector);
+		irq_info_t pit_irq_info;
+		irq_get_info(PIT_IRQ, &pit_irq_info);
+		irq_set(PIT_IRQ, virt_timer_irq_handler);
+		irq_set(LAPIC_TIMER_VECTOR - 32, virt_timer_irq_handler);
+		virt_int_ctrl_unmask_irq(pit_irq_info.irq_remapped);
 		lapic_timer_init(LAPIC_TIMER_VECTOR);
-		virt_int_ctrl_mask_irq(IRQ_INFOS[PIT_IRQ].vector);
-		IRQ_HANDLERS[IRQ_INFOS[PIT_IRQ].vector] = 0;
+		virt_int_ctrl_mask_irq(pit_irq_info.irq_remapped);
+		irq_set(PIT_IRQ, NULL);
 	}
 	else {
 		tty_prints_positive("PIT\n");
 		
+		irq_info_t pit_irq_info;
+		irq_get_info(PIT_IRQ, &pit_irq_info);
+		irq_set(PIT_IRQ, virt_timer_irq_handler);
+		
 		pit_init(PIT_COMMAND_SQUARE_WAVE, PIT_COMMAND_CHNL0, 10);
-		IRQ_HANDLERS[IRQ_INFOS[PIT_IRQ].vector] = virt_timer_irq_handler;
-		virt_int_ctrl_unmask_irq(IRQ_INFOS[PIT_IRQ].vector);
+		virt_int_ctrl_unmask_irq(pit_irq_info.irq_remapped);
 	}
 
 	tty_prints("Paging:\t\t\t\t\t");
@@ -289,17 +298,18 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 
 	tty_prints_positive("[ENABLED]\n");
 
-	tty_prints_positive("Stop after 3 seconds...\n");
+	tty_prints_positive("3 seconds...\n");
 	virt_timer_sleep(1000);
-	tty_prints_neutral("Stop after 2 seconds...\n");
+	tty_prints_neutral("2 seconds...\n");
 	virt_timer_sleep(1000);
-	tty_prints_negative("Stop after 1 seconds...\n");
+	tty_prints_negative("1 seconds...\n");
 	virt_timer_sleep(1000);
+	tty_prints_negative("Reached EOF.\n");
 	
 	panic_halt();
 }
 
-boot_info_t BOOT_INFO;
+boot_info_t BOOT_INFO = { 0 };
 
 gdt32_t ALIGNED(16) GDT[3] = {
 	GDT32_STATIC(0, 0, 0, 0),
@@ -321,14 +331,5 @@ gdtr32_t ALIGNED(16) GDTR = GDTR_STATIC(
 	sizeof(GDT),
 	(uintptr_t)&GDT[0]
 );
-
-idt32_t ALIGNED(16) IDT[256] = { 0 };
-
-idtr32_t ALIGNED(16) IDTR = IDTR_STATIC(
-	sizeof(IDT),
-	(uintptr_t)&IDT[0]
-);
-
-uintptr_t ISRS[32] = { 0 };
 
 paging_pde_t ALIGNED(0x1000) PDE[PAGING_NUM_DIRECTORY_ENTRIES] = { 0 };

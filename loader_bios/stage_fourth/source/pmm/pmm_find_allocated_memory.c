@@ -8,9 +8,8 @@ bool pmm_find_allocated_memory(void* ptr, pmm_reg_t** reg, size_t* index) {
 		!ptr ||
 		(uintptr_t)ptr & (PMM_PAGE_SIZE - 1)
 	) return false;
-
-	irq_flags_t irq_flags = irq_disable();
-	spinlock_acquire(&__PMM_LOCK);
+	
+	ENTER_CRITICAL_SECTION();
 
 	pmm_reg_t* creg = (pmm_reg_t*)PMM_FIRST_REGION_BASE_ADDRESS;
 	while (creg != NULL) {
@@ -38,12 +37,10 @@ bool pmm_find_allocated_memory(void* ptr, pmm_reg_t** reg, size_t* index) {
 		if (reg) *reg = (pmm_reg_t*)reg_base;
 		if (index) *index = i_start_ptr;
 
-		spinlock_release(&__PMM_LOCK);
-		irq_restore(irq_flags);
+		EXIT_CRITICAL_SECTION();
 		return true;
 	}
 
-	spinlock_release(&__PMM_LOCK);
-	irq_restore(irq_flags);
+	EXIT_CRITICAL_SECTION();
 	return false;
 }

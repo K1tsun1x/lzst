@@ -24,6 +24,6 @@ typedef struct _gdtr64_t {
 /**
  * @warning gdt[0] = empty, gdt[1] = code, gdt[2] = data(!)
  */
-EXTERN_C void LOADERCALL reload_gdtr(const void* gdtr);
+EXTERN_C void LOADERCALL gdtr_load(const void* gdtr);
 
 #endif

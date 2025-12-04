@@ -33,11 +33,6 @@ extern gfx_video_mode_t GFX_VIDEO_MODE;
 extern gdt32_t ALIGNED(16) GDT[3];
 extern gdtr32_t ALIGNED(16) GDTR;
 
-extern idt32_t ALIGNED(16) IDT[256];
-extern idtr32_t ALIGNED(16) IDTR;
-
-extern uintptr_t ISRS[32];
-
 extern paging_pde_t ALIGNED(0x1000) PDE[PAGING_NUM_DIRECTORY_ENTRIES];
 
 #endif

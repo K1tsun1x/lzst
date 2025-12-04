@@ -4,6 +4,7 @@
 
 #include <asm.h>
 #include <pmm/pmm.h>
+#include <critical-section/critical-section.h>
 #include <spinlock/spinlock.h>
 #include "paging_pde.h"
 #include "paging_pte.h"
@@ -31,6 +32,6 @@ bool paging_map_pages(paging_pde_t* directory, uintptr_t src_phys, uintptr_t dst
 /**
  * @warning Only for identity paging!
  */
-bool paging_unmap_pages(const paging_pde_t* directory, uintptr_t virt, size_t count);
+bool paging_unmap_pages(paging_pde_t* directory, uintptr_t virt, size_t count);
 
 #endif

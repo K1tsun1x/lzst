@@ -6,6 +6,7 @@
 #include <irq/irq.h>
 #include <isr/isr_data.h>
 #include <virt-int-ctrl/virt-int-ctrl.h>
+#include <critical-section/critical-section.h>
 
 #define PIT_PORT_CHNL0_DATA				0x40
 #define PIT_PORT_CHNL1_DATA				0x41

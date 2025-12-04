@@ -1,6 +1,6 @@
 #include <irq/irq.h>
 
-isr_t IRQ_HANDLERS[NUM_IRQS] = { 0 };
+extern isr_t IRQ_HANDLERS[NUM_IRQS];
 
 EXTERN_C void irq_global_handler(isr_data_t* data) {
 	size_t irq_index = data->int_index - 32;

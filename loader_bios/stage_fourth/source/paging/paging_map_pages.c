@@ -1,7 +1,6 @@
 #include <paging/paging.h>
 
-extern spinlock_t __PAGING_LOCK;
-
+// FIXME: no VMM_VIRT_TO_PHYS
 bool paging_map_pages(paging_pde_t* directory, uintptr_t src_phys, uintptr_t dst_virt, size_t count, uint32_t flags) {
 	if ((src_phys & 0x3ff) || (dst_virt & 0x3ff)) return false;
 	
@@ -16,8 +15,7 @@ bool paging_map_pages(paging_pde_t* directory, uintptr_t src_phys, uintptr_t dst
 	const size_t num_tables_present = ALIGN_UP_P2(count, PAGING_NUM_TABLE_ENTRIES) / PAGING_NUM_TABLE_ENTRIES;
 	if (!paging_ensure_tables_present(directory, i, num_tables_present, flags)) return false;
 
-	irq_flags_t irq_flags = irq_disable();
-	spinlock_acquire(&__PAGING_LOCK);
+	ENTER_CRITICAL_SECTION();
 	
 	for (; i < PAGING_NUM_DIRECTORY_ENTRIES && count; i++) {
 		paging_pte_t* pte = (paging_pte_t*)(directory[i] & PAGING_MASK_PDE_ADDRESS);
@@ -33,7 +31,6 @@ bool paging_map_pages(paging_pde_t* directory, uintptr_t src_phys, uintptr_t dst
 		i_page_in_table = 0;
 	}
 
-	spinlock_release(&__PAGING_LOCK);
-	irq_restore(irq_flags);
+	EXIT_CRITICAL_SECTION();
 	return count == 0;
 }

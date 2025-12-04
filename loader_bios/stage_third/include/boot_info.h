@@ -50,8 +50,8 @@ typedef struct _boot_info_t {
 	/**
 	 * @warning dynarr(!)
 	 */
-	void*									ioapic_int_src_overrides;
-	size_t									num_ioapic_int_src_overrides;
+	void*									ioapic_isos;
+	size_t									num_ioapic_isos;
 } boot_info_t;
 #pragma pack(pop)
 

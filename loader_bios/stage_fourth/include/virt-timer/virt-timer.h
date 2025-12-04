@@ -4,8 +4,8 @@
 
 #include <typedefs.h>
 #include <isr/isr.h>
-#include <irq/irq.h>
 #include <virt-int-ctrl/virt-int-ctrl.h>
+#include <asm.h>
 
 void virt_timer_wait_irq(void);
 void virt_timer_sleep(size_t ms);

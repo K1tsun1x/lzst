@@ -37,8 +37,8 @@
 #define IRQ_INFO_POLARITY_ACTIVE_LOW	1
 
 typedef struct _irq_info_t {
-	uint8_t			irq;
-	uint8_t			vector;
+	uint8_t			irq_original;
+	uint8_t			irq_remapped;
 	/*
 		0 - edge
 		1 - level
@@ -53,10 +53,13 @@ typedef struct _irq_info_t {
 	uint8_t			polarity;
 } irq_info_t;
 
-EXTERN_C void irq_global_handler(isr_data_t* data);
-void irq_init(void* idt);
+bool irq_set(size_t irq, isr_t handler);
+bool irq_get(size_t irq, isr_t* handler);
+bool irq_set_info(size_t irq, const irq_info_t* info);
+bool irq_get_info(size_t irq, irq_info_t* info);
 
-extern isr_t IRQ_HANDLERS[NUM_IRQS];
-extern irq_info_t IRQ_INFOS[NUM_IRQS];
+void irqs_init(void);
+
+EXTERN_C void irq_global_handler(isr_data_t* data);
 
 #endif

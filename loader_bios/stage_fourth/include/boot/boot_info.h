@@ -6,7 +6,7 @@
 #include <e820/e820_reg.h>
 #include "boot_info_lapic.h"
 #include "boot_info_ioapic.h"
-#include "boot_info_ioapic_int_src_override.h"
+#include "boot_info_ioapic_iso.h"
 
 #include <status/status.h>
 #include <dynarr/dynarr.h>
@@ -60,8 +60,8 @@ typedef struct _boot_info_t {
 	/**
 	 * @warning dynarr(!)
 	 */
-	boot_info_ioapic_int_src_override_t*	ioapic_int_src_overrides;
-	size_t									num_ioapic_int_src_overrides;
+	boot_info_ioapic_iso_t*					ioapic_isos;
+	size_t									num_ioapic_isos;
 } boot_info_t;
 #pragma pack(pop)
 
