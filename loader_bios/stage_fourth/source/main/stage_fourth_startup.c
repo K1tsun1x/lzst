@@ -301,11 +301,11 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 	tty_prints_positive("[ENABLED]\n");
 
 	tty_prints_positive("3 seconds...\n");
-	virt_timer_sleep(1000);
+	virt_timer_delay(1000);
 	tty_prints_neutral("2 seconds...\n");
-	virt_timer_sleep(1000);
+	virt_timer_delay(1000);
 	tty_prints_negative("1 seconds...\n");
-	virt_timer_sleep(1000);
+	virt_timer_delay(1000);
 	tty_prints_negative("Reached EOF.\n");
 	
 	panic_halt();
