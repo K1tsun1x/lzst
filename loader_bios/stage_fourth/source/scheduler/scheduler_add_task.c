@@ -20,6 +20,34 @@ status_t scheduler_add_task(scheduler_task_t* task) {
 	*queue = tmp;
 
 	task = &(*queue)[index];
+
+	// FIXME: no cr3 support
+	paging_pde_t* task_dir = (paging_pde_t*)(read_cr3() & PAGING_MASK_PDE_ADDRESS);
+
+	task->default_regs.sp -= sizeof(uintptr_t);
+	vmm_copy_memory(
+		task_dir,
+		task->default_regs.sp,
+		&task->default_regs.flags,
+		sizeof(uintptr_t)
+	);
+	
+	task->default_regs.sp -= sizeof(uintptr_t);
+	vmm_copy_memory(
+		task_dir,
+		task->default_regs.sp,
+		&task->default_regs.cs,
+		sizeof(uintptr_t)
+	);
+	
+	task->default_regs.sp -= sizeof(uintptr_t);
+	vmm_copy_memory(
+		task_dir,
+		task->default_regs.sp,
+		&task->default_regs.ip,
+		sizeof(uintptr_t)
+	);
+	
 	task->next = &(*queue)[0];
 	if (index) (*queue)[index - 1].next = task;
 	return STATUS_OK;

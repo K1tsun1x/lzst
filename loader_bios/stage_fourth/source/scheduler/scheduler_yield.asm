@@ -30,18 +30,23 @@ extern SCHEDULER_QUEUE_READY
 
 extern sys_osxsave_present
 extern sys_fpu_present
-extern tty_printf
 
 ; void LOADERCALL scheduler_yield(void)
 global scheduler_yield
 scheduler_yield:
-	pop dword [.tmp]
-
-	pushf
 	push cs
-	push dword [.tmp]
+	pushf
+	push eax
+	push ecx
+	mov eax, [esp + 8]			; AX = FLAGS
+	mov ecx, [esp + 16]			; CX = IP
+	mov [esp + 8], ecx			; FLAGS = CX => FLAGS = IP
+	mov [esp + 16], eax			; IP = AX => IP = FLAGS
+	pop ecx
+	pop eax
 	
 	cli
+	; FIXME: DS may be != 0x10!!!
 	cmp dword [SCHEDULER_CURRENT_TASK], 0
 	je .after_save_cur
 
@@ -103,9 +108,9 @@ scheduler_yield:
 	mov edx, [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_DX]
 	mov ecx, [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_CX]
 
-	push dword [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_FLAGS]
-	push dword [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_CS]
-	push dword [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_IP]
+	; push dword [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_FLAGS]
+	; push dword [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_CS]
+	; push dword [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_IP]
 
 	mov eax, [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_AX]
 	jmp .after_load_next

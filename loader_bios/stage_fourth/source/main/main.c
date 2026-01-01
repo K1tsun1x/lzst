@@ -386,20 +386,16 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 }
 
 void task1(void) {
-	for (long i = 0; ; i++) {
+	for (size_t i = 0; ; i++) {
 		tty_printf("\x1b[105;93mFirst: %#010x\n", i);
 		scheduler_yield();
-
-		virt_timer_delay(1000);
 	}
 }
 
 void task2(void) {
-	for (long i = 0; ; i++) {
+	for (size_t i = 0x80000000; ; i++) {
 		tty_printf("\x1b[104;92mSecond: %#010x\n", i);
 		scheduler_yield();
-		
-		virt_timer_delay(1000);
 	}
 }
 
