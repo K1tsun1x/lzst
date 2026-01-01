@@ -38,15 +38,15 @@ scheduler_yield:
 	pushf
 	push eax
 	push ecx
-	mov eax, [esp + 8]			; AX = FLAGS
-	mov ecx, [esp + 16]			; CX = IP
-	mov [esp + 8], ecx			; FLAGS = CX => FLAGS = IP
-	mov [esp + 16], eax			; IP = AX => IP = FLAGS
+	mov eax, [esp + 8]	; AX = FLAGS
+	mov ecx, [esp + 16]	; CX = IP
+	mov [esp + 8], ecx	; FLAGS = CX => FLAGS = IP
+	mov [esp + 16], eax	; IP = AX => IP = FLAGS
 	pop ecx
 	pop eax
 	
 	cli
-	; FIXME: DS may be != 0x10!!!
+	; FIXME: DS can be != 0x10!!!
 	cmp dword [SCHEDULER_CURRENT_TASK], 0
 	je .after_save_cur
 
@@ -104,14 +104,17 @@ scheduler_yield:
 	mov esi, [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_SI]
 	mov ebp, [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_BP]
 	mov esp, [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_SP]
+
+	mov ecx, [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_IP]			; overwrite IP
+	mov [esp + 0], ecx
+	mov ecx, [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_CS]			; overwrite CS
+	mov [esp + 4], ecx
+	mov ecx, [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_FLAGS]		; overwrite FLAGS
+	mov [esp + 8], ecx
+
 	mov ebx, [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_BX]
 	mov edx, [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_DX]
 	mov ecx, [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_CX]
-
-	; push dword [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_FLAGS]
-	; push dword [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_CS]
-	; push dword [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_IP]
-
 	mov eax, [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_AX]
 	jmp .after_load_next
 .after_save_cur:
@@ -126,4 +129,3 @@ scheduler_yield:
 	jmp .after_save_cur_def_regs
 .after_load_next:
 	iret
-.tmp:				dd 0

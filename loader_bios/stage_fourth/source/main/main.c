@@ -387,15 +387,19 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 
 void task1(void) {
 	for (size_t i = 0; ; i++) {
-		tty_printf("\x1b[105;93mFirst: %#010x\n", i);
+		tty_printf("\x1b[105;93mFirst: %#010x, FLAGS: %#010x\n", i, read_flags());
 		scheduler_yield();
+
+		virt_timer_delay(250);
 	}
 }
 
 void task2(void) {
 	for (size_t i = 0x80000000; ; i++) {
-		tty_printf("\x1b[104;92mSecond: %#010x\n", i);
+		tty_printf("\x1b[104;92mSecond: %#010x, FLAGS: %#010x\n", i, read_flags());
 		scheduler_yield();
+
+		virt_timer_delay(250);
 	}
 }
 
