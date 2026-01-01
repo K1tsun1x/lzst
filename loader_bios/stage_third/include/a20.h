@@ -9,7 +9,7 @@
 #define A20_FAST_GATE_RESET_CPU			1
 #define A20_FAST_GATE_ENABLE			2
 
-EXTERN_C bool LOADERCALL a20_enabled(void);
+XTRN_C bool LOADERCALL a20_enabled(void);
 
 /**
  * @return Returns true if A20 was changed by this call

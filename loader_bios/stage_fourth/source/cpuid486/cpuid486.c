@@ -1,6 +1,6 @@
 #include <cpuid486/cpuid486.h>
 
-EXTERN_C void LOADERCALL __cpuid486_call(
+XTRN_C void LOADERCALL __cpuid486_call(
 	uint32_t leaf,
 	uint32_t sub_leaf,
 	uint32_t* eax,

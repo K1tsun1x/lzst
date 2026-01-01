@@ -2,7 +2,7 @@
 
 static vbe_mode_info_t __VBE_MODE_INFO;
 
-EXTERN_C uint16_t LOADERCALL __vbe_read_far_word(uint16_t offset, uint16_t segment);
+XTRN_C uint16_t LOADERCALL __vbe_read_far_word(uint16_t offset, uint16_t segment);
 
 static inline int __idiff(int a, int b) {
 	a -= b;

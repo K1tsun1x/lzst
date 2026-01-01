@@ -38,7 +38,7 @@ ERROR_STUB			17
 NOT_ERROR_STUB		18
 NOT_ERROR_STUB		19
 NOT_ERROR_STUB		20
-ERROR_STUB			21
+NOT_ERROR_STUB		21
 NOT_ERROR_STUB		22
 NOT_ERROR_STUB		23
 NOT_ERROR_STUB		24
@@ -46,8 +46,8 @@ NOT_ERROR_STUB		25
 NOT_ERROR_STUB		26
 NOT_ERROR_STUB		27
 NOT_ERROR_STUB		28
-ERROR_STUB			29
-ERROR_STUB			30
+NOT_ERROR_STUB		29
+NOT_ERROR_STUB		30
 NOT_ERROR_STUB		31
 
 global exception_global_handler_stub
@@ -65,7 +65,8 @@ exception_global_handler_stub:
 	mov gs, ax
 	
 	mov eax, esp
-	push esp
+	push eax
+	cld
 	call exception_global_handler
 	pop eax
 

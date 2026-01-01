@@ -2,8 +2,8 @@
 
 extern uint16_t __min_stdio_offset;
 
-EXTERN_C void LOADERCALL __min_stdio_write_word(uint16_t offset, uint16_t value);
-EXTERN_C uint16_t LOADERCALL __min_stdio_read_word(uint16_t offset);
+XTRN_C void LOADERCALL __min_stdio_write_word(uint16_t offset, uint16_t value);
+XTRN_C uint16_t LOADERCALL __min_stdio_read_word(uint16_t offset);
 
 int put_colored_char(int c, uint8_t color) {
 	if (__min_stdio_offset >= TTY_SIZE) {

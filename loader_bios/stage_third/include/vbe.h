@@ -13,12 +13,12 @@
 /**
  * @return Returns true and fills the buffer if VBE is present
  */
-EXTERN_C bool LOADERCALL vbe_get_info(vbe_info_t* buffer);
+XTRN_C bool LOADERCALL vbe_get_info(vbe_info_t* buffer);
 
 /**
  * @return Returns true and fills the buffer if VBE is present
  */
-EXTERN_C bool LOADERCALL vbe_get_mode_info(uint16_t mode, vbe_mode_info_t* buffer);
+XTRN_C bool LOADERCALL vbe_get_mode_info(uint16_t mode, vbe_mode_info_t* buffer);
 
 void vbe_find_best_video_mode(
 	const vbe_info_t* vbe_info,

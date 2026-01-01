@@ -35,7 +35,7 @@ typedef uint64_t					irq_flags_t;
 static inline uint8_t inb(uint16_t port) {
 	uint8_t res;
 #if defined(__GNUC_CLANG__)
-	__asm__ __volatile__("inb %1, %0":"=a"(res):"d"(port):"memory");
+	__asm__ volatile("inb %1, %0":"=a"(res):"d"(port):"memory");
 #elif defined(_MSC_VER)
 #if defined(_M_X64)
 	res = (uint8_t)__inbyte(port);
@@ -57,7 +57,7 @@ static inline uint8_t inb(uint16_t port) {
 static inline uint16_t inw(uint16_t port) {
 	uint16_t res;
 #if defined(__GNUC_CLANG__)
-	__asm__ __volatile__("inw %1, %0":"=a"(res):"d"(port):"memory");
+	__asm__ volatile("inw %1, %0":"=a"(res):"d"(port):"memory");
 #elif defined(_MSC_VER)
 #if defined(_M_X64)
 	res = (uint16_t)__inword(port);
@@ -79,7 +79,7 @@ static inline uint16_t inw(uint16_t port) {
 static inline uint32_t inl(uint16_t port) {
 	uint32_t res;
 #if defined(__GNUC_CLANG__)
-	__asm__ __volatile__("inl %1, %0":"=a"(res):"d"(port):"memory");
+	__asm__ volatile("inl %1, %0":"=a"(res):"d"(port):"memory");
 #elif defined(_MSC_VER)
 #if defined(_M_X64)
 	res = (uint32_t)__indword(port);
@@ -100,7 +100,7 @@ static inline uint32_t inl(uint16_t port) {
 
 static inline void outb(uint16_t port, uint8_t value) {
 #if defined(__GNUC_CLANG__)
-	__asm__ __volatile__("outb %0, %1"::"a"(value), "d"(port):"memory");
+	__asm__ volatile("outb %0, %1"::"a"(value), "d"(port):"memory");
 #elif defined(_MSC_VER)
 #if defined(_M_X64)
 	__outbyte(port, value);
@@ -120,7 +120,7 @@ static inline void outb(uint16_t port, uint8_t value) {
 
 static inline void outw(uint16_t port, uint16_t value) {
 #if defined(__GNUC_CLANG__)
-	__asm__ __volatile__("outw %0, %1"::"a"(value), "d"(port):"memory");
+	__asm__ volatile("outw %0, %1"::"a"(value), "d"(port):"memory");
 #elif defined(_MSC_VER)
 #if defined(_M_X64)
 	__outword(port, value);
@@ -140,7 +140,7 @@ static inline void outw(uint16_t port, uint16_t value) {
 
 static inline void outl(uint16_t port, uint32_t value) {
 #if defined(__GNUC_CLANG__)
-	__asm__ __volatile__("outl %0, %1"::"a"(value), "d"(port):"memory");
+	__asm__ volatile("outl %0, %1"::"a"(value), "d"(port):"memory");
 #elif defined(_MSC_VER)
 #if defined(_M_X64)
 	__outdword(port, value);
@@ -165,9 +165,9 @@ static inline void io_wait(void) {
 static inline void cpu_relax(void) {
 #if defined(__GNUC_CLANG__)
 #if defined(__x86_64__) || defined(__i386__)
-	__asm__ __volatile__("pause":::"memory");
+	__asm__ volatile("pause":::"memory");
 #else
-	__asm__ __volatile__("":::"memory");
+	__asm__ volatile("":::"memory");
 #endif
 #elif defined(_MSC_VER)
 #if defined(_M_X64)
@@ -265,7 +265,7 @@ static inline void panic_halt(void) {
 	for (;;) {
 #if defined(__GNUC_CLANG__)
 #if defined(__x86_64__) || defined(__i386__)
-		__asm__ __volatile__("jmp .");
+		__asm__ volatile("jmp .");
 #else
 		io_wait();
 #endif

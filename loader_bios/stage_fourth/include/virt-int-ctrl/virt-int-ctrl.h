@@ -14,6 +14,6 @@ extern pvirt_int_ctrl_mask_irq virt_int_ctrl_mask_irq;
 extern pvirt_int_ctrl_unmask_irq virt_int_ctrl_unmask_irq;
 extern pvirt_int_ctrl_mask_all_irqs virt_int_ctrl_mask_all_irqs;
 extern pvirt_int_ctrl_unmask_all_irqs virt_int_ctrl_unmask_all_irqs;
-extern pvirt_int_ctrl_eoi virt_int_ctrl_eoi;
+XTRN_C pvirt_int_ctrl_eoi virt_int_ctrl_eoi;
 
 #endif

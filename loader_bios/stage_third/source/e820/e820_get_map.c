@@ -2,7 +2,7 @@
 
 static e820_ard_t __TMP_ARD;
 
-EXTERN_C bool LOADERCALL __e820_get_next_entry(uint32_t ebx, uint16_t di, uint32_t* size, uint32_t* next);
+XTRN_C bool LOADERCALL __e820_get_next_entry(uint32_t ebx, uint16_t di, uint32_t* size, uint32_t* next);
 
 static inline boot_mem_reg_type_t __e820_ard_type_to_boot_mem_reg_type(uint32_t type) {
 	switch(type) {

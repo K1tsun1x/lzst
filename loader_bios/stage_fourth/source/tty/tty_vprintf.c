@@ -168,6 +168,12 @@ int tty_vprintf(const char* s, va_list args) {
 			continue;
 		}
 
+		if (*s == '?') {
+			status_t status = (status_t)va_arg(args, long);
+			printed_chars += tty_print_status_colored(status, GFX_UNPACK_COLOR(frg_color), GFX_UNPACK_COLOR(bkg_color));
+			continue;
+		}
+
 		bool flag_hash = false;
 		for (; *s == '#'; s++) {
 			if (*s == '#') flag_hash = true;

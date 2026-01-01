@@ -47,7 +47,10 @@ void* pmm_allocate_memory(
 					reg->num_busy_pages += count;
 
 					EXIT_CRITICAL_SECTION();
-					return (void*)(base_pages + PMM_PAGE_SIZE * i_start);
+					
+					void* res = (void*)(base_pages + PMM_PAGE_SIZE * i_start);
+					if (flags & PMM_MEM_FLAG_ZEROED) memset(res, 0, size);
+					return res;
 				}
 
 				i_start += count + 1;

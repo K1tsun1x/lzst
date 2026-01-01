@@ -2,7 +2,7 @@
 
 uint16_t __min_stdio_offset = 0;
 
-EXTERN_C void LOADERCALL __min_stdio_write_word(uint16_t offset, uint16_t value);
+XTRN_C void LOADERCALL __min_stdio_write_word(uint16_t offset, uint16_t value);
 
 void min_stdio_init(void) {
 	uint16_t tmp_offset = 0;

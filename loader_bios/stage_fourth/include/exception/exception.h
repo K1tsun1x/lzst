@@ -133,6 +133,6 @@ bool exception_set(size_t index, isr_t isr);
 bool exception_get(size_t index, isr_t* isr);
 void exceptions_init(void);
 
-EXTERN_C void exception_global_handler(isr_data_t* data);
+XTRN_C void exception_global_handler(isr_data_t* data);
 
 #endif

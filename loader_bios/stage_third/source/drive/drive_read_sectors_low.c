@@ -1,6 +1,6 @@
 #include <drive.h>
 
-EXTERN_C bool LOADERCALL __drive_read_sector_block(
+XTRN_C bool LOADERCALL __drive_read_sector_block(
 	uint8_t drive,
 	uint16_t count,
 	uint16_t buffer_off,

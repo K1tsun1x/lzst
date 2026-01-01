@@ -10,6 +10,8 @@
 #define PAGING_MASK_PTE_FLAGS					0xfff
 #define PAGING_MASK_PTE_ADDRESS					0xfffff000
 
+#define PAGING_PAGE_INDEX_FROM_ADDRESS(...)		(((__VA_ARGS__) >> 12) & 0x3ff)
+
 // PAGING_PTE_FLAG_* | ...
 typedef uint32_t	paging_pte_t;
 

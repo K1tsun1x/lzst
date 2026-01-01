@@ -1,12 +1,12 @@
 #pragma once
-#ifndef __STAGE_FOURTH_STARTUP_H
-#define __STAGE_FOURTH_STARTUP_H
+#ifndef __MAIN_H
+#define __MAIN_H
 
 #include <boot/boot_info.h>
 #include <asm.h>
-#include <cpuid486/cpuid486.h>
 #include <gfx/gfx.h>
 #include <tty/tty.h>
+#include <sys/sys.h>
 #include <pmm/pmm.h>
 #include <fpu/fpu.h>
 #include <paging/paging.h>
@@ -26,10 +26,12 @@
 
 #define TIMER_TICK_MS				1
 
+extern void task1(void);
+extern void task2(void);
+
 extern uint32_t __PTR_BASE__[];
 extern uint32_t __PTR_END__[];
 
-extern boot_info_t BOOT_INFO;
 extern gfx_video_mode_t GFX_VIDEO_MODE;
 
 extern gdt32_t ALIGNED(16) GDT[3];

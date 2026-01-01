@@ -1,8 +1,9 @@
 #include <lapic/lapic.h>
 
+extern volatile uint32_t* LAPIC_REGS;
+
 uint32_t lapic_read(uint32_t index) {
-	__volatile__ uint32_t* regs = (__volatile__ uint32_t*)lapic_get_base();
-	lfence();
-	memory_barrier();
-	return regs[index >> 2];
+	// lfence();
+	// memory_barrier();
+	return LAPIC_REGS[index >> 2];
 }

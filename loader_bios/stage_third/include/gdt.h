@@ -51,7 +51,7 @@ typedef struct _gdt64_t {
 /**
  * @warning gdt[0] = empty, gdt[1] = code, gdt[2] = data(!)
  */
-EXTERN_C void LOADERCALL gdt_load(
+XTRN_C void LOADERCALL gdt_load(
 	const void* gdt_descriptor,
 	uintptr_t return_address,
 	uintptr_t stack_top,

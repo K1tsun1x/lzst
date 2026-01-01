@@ -21,6 +21,6 @@ typedef struct _idtr64_t {
 } idtr64_t;
 #pragma pack(pop)
 
-EXTERN_C void LOADERCALL idtr_load(const void* idtr);
+XTRN_C void LOADERCALL idtr_load(const void* idtr);
 
 #endif

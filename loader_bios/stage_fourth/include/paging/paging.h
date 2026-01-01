@@ -9,10 +9,10 @@
 #include "paging_pde.h"
 #include "paging_pte.h"
 
-EXTERN_C void LOADERCALL paging_load_directory(const paging_pde_t* directory);
-EXTERN_C paging_pde_t* LOADERCALL paging_get_directory(void);
-EXTERN_C void LOADERCALL paging_enable(void);
-EXTERN_C void LOADERCALL paging_invalidate(void);
+XTRN_C void LOADERCALL paging_load_directory(const paging_pde_t* directory);
+XTRN_C paging_pde_t* LOADERCALL paging_get_directory(void);
+XTRN_C void LOADERCALL paging_enable(void);
+XTRN_C void LOADERCALL paging_invalidate(void);
 
 /**
  * @warning Only for identity paging!

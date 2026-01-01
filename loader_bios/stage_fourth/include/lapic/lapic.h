@@ -57,11 +57,11 @@
 // Divide Configuration Register for timer (RW)
 #define LAPIC_REG_DCR							0x3e0
 
-uintptr_t lapic_get_base(void);
+uint64_t lapic_get_base(void);
 bool lapic_set_base(uintptr_t base);
 uint32_t lapic_read(uint32_t index);
 void lapic_write(uint32_t index, uint32_t value);
-void lapic_eoi(uint8_t index);
+void lapic_send_eoi(uint8_t index);
 uint32_t lapic_timer_calibrate(void);
 
 void lapic_init(void);

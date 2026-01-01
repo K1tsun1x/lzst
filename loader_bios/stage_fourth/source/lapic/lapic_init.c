@@ -2,9 +2,15 @@
 
 uint32_t LAPIC_TICKS_PER_MS = 0;
 
+#include <tty/tty.h>
 void lapic_init(void) {
-	uint32_t apic_base = lapic_get_base();
-	lapic_set_base(apic_base);
+	volatile uint64_t lapic_base = lapic_get_base();
+	if (lapic_base > 0xffffffffULL) {
+		tty_prints_negative("Error: LAPIC registers unreachable!\n");
+		panic_halt();
+	}
+
+	lapic_set_base((uintptr_t)(lapic_base & 0xffffffff));
 
 	lapic_enable_svr(0xff);
 

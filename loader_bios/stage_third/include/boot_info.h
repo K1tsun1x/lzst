@@ -22,6 +22,7 @@ typedef struct _boot_info_t {
 	 * SSE4.2:	0x42
 	 */
 	size_t									sse_version;
+	bool									xsave_present;
 	bool									osxsave_present;
 	bool									avx_present;
 	bool									apic_present;

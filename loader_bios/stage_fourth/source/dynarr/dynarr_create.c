@@ -16,7 +16,7 @@ void* dynarr_create(size_t elem_size, size_t num_elems) {
 	if (!header) return NULL;
 
 	header->elem_size = elem_size;
-	header->num_elems = num_elems;
+	header->num_elems = 0;
 	header->capacity = capacity;
 	return (void*)DYNARR_MEM_FROM_HEADER(header);
 }

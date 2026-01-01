@@ -1,7 +1,7 @@
 #include <virt-timer/virt-timer.h>
 
-extern __volatile__ size_t VIRT_TIMER_TICKS;
-extern __volatile__ uint16_t VIRT_TIMER_TICK_MS;
+extern volatile size_t VIRT_TIMER_TICKS;
+extern volatile uint16_t VIRT_TIMER_TICK_MS;
 
 void virt_timer_delay(size_t ms) {
 	const size_t start = VIRT_TIMER_TICKS;

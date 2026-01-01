@@ -8,13 +8,6 @@
 #include "boot_info_ioapic.h"
 #include "boot_info_ioapic_iso.h"
 
-#include <status/status.h>
-#include <dynarr/dynarr.h>
-#include <cpuid486/cpuid486.h>
-#include <acpi/acpi.h>
-#include <lapic/lapic.h>
-#include <fpu/fpu.h>
-
 #pragma pack(push, 1)
 typedef struct _boot_info_t {
 	uint8_t									boot_drive;
@@ -32,6 +25,7 @@ typedef struct _boot_info_t {
 	 * SSE4.2:	0x42
 	 */
 	size_t									sse_version;
+	bool									xsave_present;
 	bool									osxsave_present;
 	bool									avx_present;
 	bool									apic_present;
@@ -64,8 +58,5 @@ typedef struct _boot_info_t {
 	size_t									num_ioapic_isos;
 } boot_info_t;
 #pragma pack(pop)
-
-void boot_info_get_features(boot_info_t* boot_info);
-status_t boot_info_parse_acpi_tables(boot_info_t* boot_info);
 
 #endif

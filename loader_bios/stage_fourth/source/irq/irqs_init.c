@@ -1,22 +1,22 @@
 #include <irq/irq.h>
 
-EXTERN_C void irq_stub0(void);
-EXTERN_C void irq_stub1(void);
-EXTERN_C void irq_stub2(void);
-EXTERN_C void irq_stub3(void);
-EXTERN_C void irq_stub4(void);
-EXTERN_C void irq_stub5(void);
-EXTERN_C void irq_stub6(void);
-EXTERN_C void irq_stub7(void);
-EXTERN_C void irq_stub8(void);
-EXTERN_C void irq_stub9(void);
-EXTERN_C void irq_stub10(void);
-EXTERN_C void irq_stub11(void);
-EXTERN_C void irq_stub12(void);
-EXTERN_C void irq_stub13(void);
-EXTERN_C void irq_stub14(void);
-EXTERN_C void irq_stub15(void);
-EXTERN_C void irq_stub192(void);
+XTRN_C void irq_stub0(void);
+XTRN_C void irq_stub1(void);
+XTRN_C void irq_stub2(void);
+XTRN_C void irq_stub3(void);
+XTRN_C void irq_stub4(void);
+XTRN_C void irq_stub5(void);
+XTRN_C void irq_stub6(void);
+XTRN_C void irq_stub7(void);
+XTRN_C void irq_stub8(void);
+XTRN_C void irq_stub9(void);
+XTRN_C void irq_stub10(void);
+XTRN_C void irq_stub11(void);
+XTRN_C void irq_stub12(void);
+XTRN_C void irq_stub13(void);
+XTRN_C void irq_stub14(void);
+XTRN_C void irq_stub15(void);
+XTRN_C void irq_stub192(void);
 
 void irqs_init(void) {
 	idt32_set_entry(32,					(uint32_t)irq_stub0,	0x08, IDT_TYPE_INT32, IDT_FLAG_PRESENT);

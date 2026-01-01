@@ -5,7 +5,7 @@
 #include "cpuid486_ecx_feature.h"
 #include "cpuid486_edx_feature.h"
 
-EXTERN_C bool LOADERCALL cpuid486_present(void);
+XTRN_C bool LOADERCALL cpuid486_present(void);
 
 /**
  * @param leaf EAX

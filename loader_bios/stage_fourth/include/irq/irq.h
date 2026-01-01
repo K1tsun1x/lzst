@@ -60,6 +60,6 @@ bool irq_get_info(size_t irq, irq_info_t* info);
 
 void irqs_init(void);
 
-EXTERN_C void irq_global_handler(isr_data_t* data);
+XTRN_C void irq_global_handler(isr_data_t* data);
 
 #endif

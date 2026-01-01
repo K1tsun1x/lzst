@@ -28,7 +28,7 @@ FLAGS_CC_THIRD_STAGE=-Wall -Wextra -ffreestanding -O0 -m16 -std=c17 -I $(DIR_STA
 FLAGS_LD_THIRD_STAGE=-Wall -Wextra -ffreestanding -O0 -m16 -nostdlib -T $(DIR_STAGE_THIRD)/stage_third.ld -lgcc
 
 FLAGS_CC_FOURTH_STAGE=-Wall -Wextra -ffreestanding -O0 -m32 -std=c17 -I $(DIR_STAGE_FOURTH)/include
-FLAGS_LD_FOURTH_STAGE=-Wall -Wextra -ffreestanding -O0 -m32 -nostdlib -T $(DIR_STAGE_FOURTH)/stage_fourth.ld -lgcc
+FLAGS_LD_FOURTH_STAGE=-Wall -Wextra -ffreestanding -O0 -m32 -nostdlib -T $(DIR_STAGE_FOURTH)/stage_fourth.ld -Wl,-Map=stage_fourth.map -lgcc
 
 all:	build run clean
 
@@ -84,7 +84,8 @@ endif
 	$(AS) -felf $< -o $@
 
 clean:
-	rm -f $(RESULT_STAGE_FOURTH) \
+	rm -f stage_fourth.map \
+		$(RESULT_STAGE_FOURTH) \
 		$(RESULT_STAGE_THIRD) \
 		$(RESULT_STAGE_SECOND) \
 		$(RESULT_STAGE_FIRST) \

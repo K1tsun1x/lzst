@@ -1,11 +1,12 @@
 #include <lapic/lapic.h>
 
-void lapic_write(uint32_t index, uint32_t value) {
-	__volatile__ uint32_t* regs = (__volatile__ uint32_t*)lapic_get_base();
+extern volatile uint32_t* LAPIC_REGS;
 
+void lapic_write(uint32_t index, uint32_t value) {
+	// FIXME: not checked
 	mfence();
 	memory_barrier();
-	regs[index >> 2] = value;
+	LAPIC_REGS[index >> 2] = value;
 	memory_barrier();
-	UNREFERENCED_PARAMETER(regs[LAPIC_REG_ID >> 2]);
+	UNREFERENCED_PARAMETER(LAPIC_REGS[LAPIC_REG_ID >> 2]);
 }

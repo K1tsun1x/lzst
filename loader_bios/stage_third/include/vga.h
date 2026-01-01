@@ -13,7 +13,7 @@
 
 #define VGA_CRTC_CURSOR_START_FLAG_DISABLE	0x20
 
-EXTERN_C bool LOADERCALL vga_set_video_mode(uint8_t mode);
+XTRN_C bool LOADERCALL vga_set_video_mode(uint8_t mode);
 
 bool vga_present(void);
 void vga_set_cursor_state(bool visible);

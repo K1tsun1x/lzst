@@ -7,11 +7,11 @@
 #include <stdbool.h>
 
 #ifdef __cplusplus
-#define EXTERN_C					extern "C"
+#define XTRN_C					extern "C"
 #define CONST_CAST(type, ...)		const_cast<type>(__VA_ARGS__)
 #define ENUM_TYPE(type)				: type
 #else
-#define EXTERN_C					extern
+#define XTRN_C					extern
 #define CONST_CAST(type, ...)		(type)(__VA_ARGS__)
 #define ENUM_TYPE(type)
 #endif

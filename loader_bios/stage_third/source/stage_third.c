@@ -62,7 +62,7 @@ static gdt_descriptor32_t ALIGNED(16) GDT_DESCRIPTOR_FOURTH_STAGE = GDT_DESCRIPT
 	GDT_FOURTH_STAGE
 );
 
-EXTERN_C void stage_third_startup(uint8_t drive) {
+XTRN_C void stage_third_startup(uint8_t drive) {
 	const uintptr_t base = (uintptr_t)&__PTR_BASE__;
 	const uintptr_t end = (uintptr_t)&__PTR_END__;
 	const size_t size = end - base;

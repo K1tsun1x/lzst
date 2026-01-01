@@ -28,8 +28,11 @@ IRQ					14
 IRQ					15
 IRQ					192					; LAPIC Timer (LAPIC_TIMER_VECTOR = 224 = 32 + 192)
 
+extern virt_int_ctrl_eoi
+extern tty_putchar
+
 irq_global_handler_stub:
-	pusha
+	pushad
 	push ds
 	push es
 	push fs
@@ -41,8 +44,8 @@ irq_global_handler_stub:
 	mov fs, ax
 	mov gs, ax
 	
-	mov eax, esp
 	push esp
+	cld
 	call irq_global_handler
 	pop eax
 
@@ -50,7 +53,9 @@ irq_global_handler_stub:
 	pop fs
 	pop es
 	pop ds
-	popa
+	popad
 
+	sub dword [esp], 32
+	call [virt_int_ctrl_eoi]
 	add esp, 8
 	iret

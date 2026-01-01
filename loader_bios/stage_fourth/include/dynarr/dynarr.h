@@ -10,11 +10,13 @@
 #define DYNARR_HEADER_FROM_MEM(mem)			(((dynarr_header_t*)(mem)) - 1)
 #define DYNARR_MEM_FROM_HEADER(header)		((void*)(((dynarr_header_t*)(header)) + 1))
 
+#pragma pack(push, 1)
 typedef struct _dynarr_header_t {
 	size_t		elem_size;
 	size_t		num_elems;
 	size_t		capacity;
 } dynarr_header_t;
+#pragma pack(pop)
 
 void* dynarr_create(size_t elem_size, size_t num_elems);
 

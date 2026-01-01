@@ -1,32 +1,38 @@
-#include <main/stage_fourth_startup.h>
+#include <main/main.h>
 
 void stage_fourth_startup(boot_info_t* bootloader_info) {
-	BOOT_INFO = *bootloader_info;
 	gdtr_load(&GDTR);
 
 	exceptions_init();
 	irqs_init();
 	idt32_init();
 
-	gfx_init(&BOOT_INFO.video_mode);
+	sys_init(
+		&bootloader_info->video_mode,
+		bootloader_info->vga_present,
+		bootloader_info->vbe_present,
+		bootloader_info->i8042_present
+	);
+
+	sys_info_t sys_info;
+	sys_get_info(&sys_info);
+
+	gfx_init(&sys_info.video_mode);
 	tty_init(80, 25, 2, 2, GFX_UNPACK_COLOR(GFX_COLOR_LIGHT_GRAY), 0x18, 0x18, 0x18);
 
-	boot_info_get_features(&BOOT_INFO);
-	if (!BOOT_INFO.cpuid_present) {
+	if (!sys_info.cpuid_present) {
 		// FIXME: not implemented yet...
 		tty_prints_negative("Error: machine without CPUID is not supported");
 		panic_halt();
-		return;
 	}
-	else if (!BOOT_INFO.fpu_present) {
+	else if (!sys_info.fpu_present) {
 		// FIXME: not implemented yet...
 		tty_prints_negative("Error: machine without x87 FPU is not supported");
 		panic_halt();
-		return;
 	}
 
-	const size_t w = BOOT_INFO.video_mode.width;
-	const size_t h = BOOT_INFO.video_mode.height;
+	const size_t w = sys_info.video_mode.width;
+	const size_t h = sys_info.video_mode.height;
 	const float aspect = (float)w / (float)h;
 
 	size_t num_chars_per_line = w / 14;
@@ -49,12 +55,12 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		0x18, 0x18, 0x18
 	);
 
-	tty_printf("Boot drive:\t\t\t\t\x1b[94m%#x\x1b[0m\n", BOOT_INFO.boot_drive);
+	tty_printf("Boot drive:\t\t\t\t\x1b[94m%#x\x1b[0m\n", bootloader_info->boot_drive);
 
 	const e820_reg_t RESERVED_REGS[] = {
 		{	// IVT, BDA
 			0x0000000000000000,
-			0x0000000000000500,
+			0x0000000000100000,
 			E820_REG_TYPE_RESERVED
 		},
 		{	// Video, EBDA, BIOS ROM (16-bit)
@@ -78,8 +84,8 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 			E820_REG_TYPE_RESERVED
 		},
 		{	// The fourth stage
-			(uint64_t)(uintptr_t)&__PTR_BASE__,
-			(uint64_t)((uintptr_t)&__PTR_END__ - (uintptr_t)&__PTR_BASE__),
+			(uint64_t)(uintptr_t)&__PTR_BASE__ - 0x1000,
+			(uint64_t)((uintptr_t)&__PTR_END__ - (uintptr_t)&__PTR_BASE__) + 0x1000,
 			E820_REG_TYPE_RESERVED
 		},
 		{	// Framebuffer
@@ -89,12 +95,14 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		}
 	};
 	
-	BOOT_INFO.memory_map_length = pmm_init(
-		BOOT_INFO.memory_map,
-		BOOT_INFO.memory_map_length,
+	sys_info.memory_map_length = pmm_init(
+		bootloader_info->memory_map,
+		bootloader_info->memory_map_length,
 		RESERVED_REGS,
 		sizeof(RESERVED_REGS) / sizeof(RESERVED_REGS[0])
 	);
+
+	sys_set_info(&sys_info);
 
 	if (PMM_FIRST_REGION_BASE_ADDRESS == 0) {
 		tty_prints_negative("Error: not enough memory!");
@@ -118,61 +126,61 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 	} while(first_pmm_reg != NULL);
 
 	tty_prints("VGA:\t\t\t\t\t");
-	if (BOOT_INFO.vga_present) tty_prints_positive("[PRESENT]");
+	if (sys_info.vga_present) tty_prints_positive("[PRESENT]");
 	else tty_prints_negative("[NOT PRESENT]");
 	
 	tty_prints("\nVBE:\t\t\t\t\t");
-	if (BOOT_INFO.vbe_present) tty_prints_positive("[PRESENT]");
+	if (sys_info.vbe_present) tty_prints_positive("[PRESENT]");
 	else tty_prints_negative("[NOT PRESENT]");
 	
 	tty_prints("\ni8042 controller:\t\t");
-	if (BOOT_INFO.i8042_present) tty_prints_positive("[PRESENT]");
+	if (sys_info.i8042_present) tty_prints_positive("[PRESENT]");
 	else tty_prints_negative("[NOT PRESENT]");
 	
 	tty_prints("\nCPUID:\t\t\t\t\t");
-	if (BOOT_INFO.cpuid_present) tty_prints_positive("[PRESENT]");
+	if (sys_info.cpuid_present) tty_prints_positive("[PRESENT]");
 	else tty_prints_negative("[NOT PRESENT]");
 	
 	tty_prints("\nFPU:\t\t\t\t\t");
-	if (BOOT_INFO.fpu_present) tty_prints_positive("[PRESENT]");
+	if (sys_info.fpu_present) tty_prints_positive("[PRESENT]");
 	else tty_prints_negative("[NOT PRESENT]");
 	
 	tty_prints("\nSSE version:\t\t\t");
-	if (!BOOT_INFO.sse_version) tty_prints_neutral("[NONE]");
+	if (!sys_info.sse_version) tty_prints_neutral("[NONE]");
 	else {
-		if (BOOT_INFO.sse_version < 0x10) tty_printf("\x1b[92m%u\x1b[0m", BOOT_INFO.sse_version);
+		if (sys_info.sse_version < 0x10) tty_printf("\x1b[92m%u\x1b[0m", sys_info.sse_version);
 		else {
-			if (BOOT_INFO.sse_version == 0x41) tty_printf("\x1b[92m4.1\x1b[0m");
-			else if (BOOT_INFO.sse_version == 0x42) tty_printf("\x1b[92m4.2\x1b[0m");
+			if (sys_info.sse_version == 0x41) tty_printf("\x1b[92m4.1\x1b[0m");
+			else if (sys_info.sse_version == 0x42) tty_printf("\x1b[92m4.2\x1b[0m");
 			else tty_printf("\x1b[92m4.2+\x1b[0m");
 		}
 	}
 	
 	tty_prints("\nAVX:\t\t\t\t\t");
-	if (BOOT_INFO.avx_present) tty_prints_positive("[PRESENT]");
+	if (sys_info.avx_present) tty_prints_positive("[PRESENT]");
 	else tty_prints_negative("[NOT PRESENT]");
 	
 	tty_prints("\nOSXSAVE:\t\t\t\t");
-	if (BOOT_INFO.osxsave_present) tty_prints_positive("[PRESENT]");
+	if (sys_info.osxsave_present) tty_prints_positive("[PRESENT]");
 	else tty_prints_negative("[NOT PRESENT]");
 	
 	tty_prints("\nAPIC:\t\t\t\t\t");
-	if (BOOT_INFO.apic_present) tty_prints_positive("[PRESENT]");
+	if (sys_info.apic_present) tty_prints_positive("[PRESENT]");
 	else tty_prints_negative("[NOT PRESENT]");
 	
 	tty_prints("\nMSR:\t\t\t\t\t");
-	if (BOOT_INFO.msr_present) tty_prints_positive("[PRESENT]");
+	if (sys_info.msr_present) tty_prints_positive("[PRESENT]");
 	else tty_prints_negative("[NOT PRESENT]");
 	
 	tty_printf(
 		"\nVideo:\t\t\t\t\tmode=\x1b[96m%xh\x1b[0m (\x1b[96m%u\x1b[0mx\x1b[96m%u\x1b[0m \x1b[94m%ubpp\x1b[0m)\n",
-		BOOT_INFO.video_mode.number,
-		BOOT_INFO.video_mode.width,
-		BOOT_INFO.video_mode.height,
-		BOOT_INFO.video_mode.depth
+		sys_info.video_mode.number,
+		sys_info.video_mode.width,
+		sys_info.video_mode.height,
+		sys_info.video_mode.depth
 	);
 
-	status_t status = boot_info_parse_acpi_tables(&BOOT_INFO);
+	status_t status = sys_parse_acpi_tables(&sys_info);
 	if (status != STATUS_OK) {
 		if (status == STATUS_NOT_FOUND) tty_prints_negative("Error: unable to find RSDP");
 		else if (status == STATUS_INVALID_HEADER) tty_prints_negative("Error: invalid RSDT header");
@@ -181,57 +189,59 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		panic_halt();
 	}
 
-	tty_printf("RSDP:\t\t\t\t\t\x1b[96m%#010x\x1b[0m\n", BOOT_INFO.acpi_rsdp_address);
-	tty_printf("RSDT:\t\t\t\t\t\x1b[96m%#010x\x1b[0m\n", BOOT_INFO.acpi_rsdt_address);
-	tty_printf("FADT:\t\t\t\t\t\x1b[96m%#010x\x1b[0m\n", BOOT_INFO.acpi_fadt_address);
-	tty_printf("MADT:\t\t\t\t\t\x1b[96m%#010x\x1b[0m\n", BOOT_INFO.acpi_madt_address);
+	sys_set_info(&sys_info);
+
+	tty_printf("RSDP:\t\t\t\t\t\x1b[96m%#010x\x1b[0m\n", sys_info.acpi_rsdp_address);
+	tty_printf("RSDT:\t\t\t\t\t\x1b[96m%#010x\x1b[0m\n", sys_info.acpi_rsdt_address);
+	tty_printf("FADT:\t\t\t\t\t\x1b[96m%#010x\x1b[0m\n", sys_info.acpi_fadt_address);
+	tty_printf("MADT:\t\t\t\t\t\x1b[96m%#010x\x1b[0m\n", sys_info.acpi_madt_address);
 
 	tty_prints("Interrupt Controller:\t");
-	if (BOOT_INFO.apic_present) {
+	if (sys_info.apic_present) {
 		tty_prints_positive("APIC");
 		pic_mask_all_irqs();
 		lapic_init();
 
 		tty_puts("\nLAPICs:");
-		for (size_t i = 0; i < BOOT_INFO.num_lapics; i++) {
+		for (size_t i = 0; i < sys_info.num_lapics; i++) {
 			tty_printf(
 				"%u) Processor ID=\x1b[96m%#04x\x1b[0m, APIC ID=\x1b[96m%#04x\x1b[0m, BSP=\x1b[96m%u\x1b[0m\n",
 				i + 1,
-				BOOT_INFO.lapics[i].acpi_processor_id,
-				BOOT_INFO.lapics[i].apic_id,
-				BOOT_INFO.lapics[i].bsp
+				sys_info.lapics[i].acpi_processor_id,
+				sys_info.lapics[i].apic_id,
+				sys_info.lapics[i].bsp
 			);
 		}
 
 		tty_puts("I/O APICs:");
-		for (size_t i = 0; i < BOOT_INFO.num_ioapics; i++) {
+		for (size_t i = 0; i < sys_info.num_ioapics; i++) {
 			tty_printf(
 				"%u) I/O APIC ID=\x1b[96m%#04x\x1b[0m, Base=\x1b[96m%#010x\x1b[0m, GSIB=\x1b[96m%#010x\x1b[0m\n",
 				i + 1,
-				BOOT_INFO.ioapics[i].ioapic_id,
-				BOOT_INFO.ioapics[i].ioapic_base,
-				BOOT_INFO.ioapics[i].ioapic_gsib
+				sys_info.ioapics[i].ioapic_id,
+				sys_info.ioapics[i].ioapic_base,
+				sys_info.ioapics[i].ioapic_gsib
 			);
 
 			if (
-				BOOT_INFO.ioapics[i].ioapic_gsib <= 0 &&
-				0 < BOOT_INFO.ioapics[i].ioapic_gsib + 24
-			) ioapic_init(BOOT_INFO.ioapics[i].ioapic_base);
+				sys_info.ioapics[i].ioapic_gsib <= 0 &&
+				0 < sys_info.ioapics[i].ioapic_gsib + 24
+			) ioapic_init(sys_info.ioapics[i].ioapic_base);
 		}
 
 		tty_puts("I/O APIC Interrupt Source Overrides:");
-		for (size_t i = 0; i < BOOT_INFO.num_ioapic_isos; i++) {
+		for (size_t i = 0; i < sys_info.num_ioapic_isos; i++) {
 			tty_printf(
 				"%u) Bus=\x1b[96m%xh\x1b[0m, IRQ=\x1b[96m%02xh\x1b[0m, GSI=\x1b[96m%#010x\x1b[0m\n",
 				i + 1,
-				BOOT_INFO.ioapic_isos[i].bus,
-				BOOT_INFO.ioapic_isos[i].irq,
-				BOOT_INFO.ioapic_isos[i].gsi
+				sys_info.ioapic_isos[i].bus,
+				sys_info.ioapic_isos[i].irq,
+				sys_info.ioapic_isos[i].gsi
 			);
 
 			if (i >= NUM_IRQS) continue;
 			
-			boot_info_ioapic_iso_t* ioapiciso = &BOOT_INFO.ioapic_isos[i];
+			sys_info_ioapic_iso_t* ioapiciso = &sys_info.ioapic_isos[i];
 			irq_info_t irq_info;
 			irq_get_info(ioapiciso->irq, &irq_info);
 			irq_info.irq_remapped = (uint8_t)ioapiciso->gsi;
@@ -249,7 +259,7 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		virt_int_ctrl_unmask_irq = ioapic_unmask_irq;
 		virt_int_ctrl_mask_all_irqs = ioapic_mask_all_irqs;
 		virt_int_ctrl_unmask_all_irqs = ioapic_unmask_all_irqs;
-		virt_int_ctrl_eoi = lapic_eoi;
+		virt_int_ctrl_eoi = lapic_send_eoi;
 	}
 	else {
 		tty_prints_positive("PIC");
@@ -266,7 +276,8 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 	sti();
 
 	tty_prints("\nTimers:\t\t\t\t\t");
-	if (BOOT_INFO.apic_present) {
+	uint8_t timer_vector;
+	if (sys_info.apic_present) {
 		tty_prints_positive("LAPIC, PIT\n");
 
 		irq_info_t pit_irq_info;
@@ -274,22 +285,40 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		irq_set(PIT_IRQ, virt_timer_irq_handler);
 		irq_set(LAPIC_TIMER_VECTOR - 32, virt_timer_irq_handler);
 		virt_int_ctrl_unmask_irq(pit_irq_info.irq_remapped);
+
 		lapic_timer_init(LAPIC_TIMER_VECTOR, TIMER_TICK_MS);
+
 		virt_int_ctrl_mask_irq(pit_irq_info.irq_remapped);
+		irq_set(LAPIC_TIMER_VECTOR - 32, NULL);
 		irq_set(PIT_IRQ, NULL);
+
+		timer_vector = LAPIC_TIMER_VECTOR;
+		scheduler_init(LAPIC_TIMER_VECTOR);
 	}
 	else {
 		tty_prints_positive("PIT\n");
 		
 		irq_info_t pit_irq_info;
 		irq_get_info(PIT_IRQ, &pit_irq_info);
-		irq_set(PIT_IRQ, virt_timer_irq_handler);
 		
 		pit_init(PIT_COMMAND_SQUARE_WAVE, PIT_COMMAND_CHNL0, TIMER_TICK_MS);
+
 		virt_int_ctrl_unmask_irq(pit_irq_info.irq_remapped);
+
+		timer_vector = 32 + pit_irq_info.irq_remapped;
+		scheduler_remap(32 + pit_irq_info.irq_remapped);
 	}
 
 	virt_timer_set_tick_ms(TIMER_TICK_MS);
+
+	tty_prints("Scheduler:\t\t\t\t\t");
+	status = scheduler_init(timer_vector);
+	if (status == STATUS_OK) tty_prints_positive("[INITIALIZED]\n");
+	else {
+		tty_prints_negative("[NOT INITIALIZED]\n");
+		tty_printf("\x1b[91mError: failed to init scheduler (status: %?)!\n", status);
+		panic_halt();
+	}
 
 	tty_prints("Paging:\t\t\t\t\t");
 	// Identity mapping (1:1)
@@ -300,6 +329,52 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 
 	tty_prints_positive("[ENABLED]\n");
 
+	const uintptr_t task1_stack_bottom = (uintptr_t)pmm_allocate_memory(0x10000, 0);
+	const uintptr_t task2_stack_bottom = (uintptr_t)pmm_allocate_memory(0x10000, 0);
+	if (!task1_stack_bottom || !task2_stack_bottom) {
+		tty_prints_negative("Error: failed to allocate stack for task(s)!\n");
+		panic_halt();
+	}
+
+	scheduler_task_def_regs_t task1_def_regs = SCHEDULER_STATIC_DEFAULT_TASK_DEF_REGS(task1_stack_bottom + 0x10000, (uint32_t)task1);
+	scheduler_task_def_regs_t task2_def_regs = SCHEDULER_STATIC_DEFAULT_TASK_DEF_REGS(task2_stack_bottom + 0x10000, (uint32_t)task2);
+
+	scheduler_task_t t1;
+	status = scheduler_create_task(&task1_def_regs, SCHEDULER_TASK_STATE_READY, SCHEDULER_TASK_FLAG_NO_AUTOREMOVE, &t1);
+	if (status != STATUS_OK) {
+		tty_printf("\x1b[91mError: failed to create task(1) (status: %?)!\n", status);
+		panic_halt();
+	}
+	
+	scheduler_task_t t2;
+	status = scheduler_create_task(&task2_def_regs, SCHEDULER_TASK_STATE_READY, SCHEDULER_TASK_FLAG_NO_AUTOREMOVE, &t2);
+	if (status != STATUS_OK) {
+		tty_printf("\x1b[91mError: failed to create task(2) (status: %?)!\n", status);
+		panic_halt();
+	}
+
+	status = scheduler_add_task(&t1);
+	if (status != STATUS_OK) {
+		tty_printf("\x1b[91mError: failed to add task(1) to queue (status: %?)!\n", status);
+		panic_halt();
+	}
+
+	status = scheduler_add_task(&t2);
+	if (status != STATUS_OK) {
+		tty_printf("\x1b[91mError: failed to add task(2) to queue (status: %?)!\n", status);
+		panic_halt();
+	}
+
+	tty_printf("T1: %#010x/%#010x\n", (uintptr_t)task1, (uintptr_t)t1.default_regs.ip);
+	tty_printf("T2: %#010x/%#010x\n", (uintptr_t)task2, (uintptr_t)t2.default_regs.ip);
+
+	tty_printf("OFFSET OF sys_info.fpu_present = %#010x\n", OFFSET_OF(sys_info_t, fpu_present));
+	tty_printf("OFFSET OF sys_info.osxsave_present = %#010x\n", OFFSET_OF(sys_info_t, osxsave_present));
+	tty_printf("OFFSET OF task.state = %#010x\n", OFFSET_OF(scheduler_task_t, state));
+	tty_printf("OFFSET OF task.next = %#010x\n", OFFSET_OF(scheduler_task_t, next));
+
+	scheduler_yield();
+	
 	tty_prints_positive("3 seconds...\n");
 	virt_timer_delay(1000);
 	tty_prints_neutral("2 seconds...\n");
@@ -307,11 +382,26 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 	tty_prints_negative("1 seconds...\n");
 	virt_timer_delay(1000);
 	tty_prints_negative("Reached EOF.\n");
-	
 	panic_halt();
 }
 
-boot_info_t BOOT_INFO = { 0 };
+void task1(void) {
+	for (long i = 0; ; i++) {
+		tty_printf("\x1b[105;93mFirst: %#010x\n", i);
+		scheduler_yield();
+
+		virt_timer_delay(1000);
+	}
+}
+
+void task2(void) {
+	for (long i = 0; ; i++) {
+		tty_printf("\x1b[104;92mSecond: %#010x\n", i);
+		scheduler_yield();
+		
+		virt_timer_delay(1000);
+	}
+}
 
 gdt32_t ALIGNED(16) GDT[3] = {
 	GDT32_STATIC(0, 0, 0, 0),

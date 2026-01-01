@@ -13,6 +13,8 @@
 #define PMM_BMP_MARK_PAGE_BUSY(bmp, i)	(((uint8_t*)bmp)[(i) >> 3] |= (1 << ((i) & 7)))
 #define PMM_BMP_MARK_PAGE_FREE(bmp, i)	(((uint8_t*)bmp)[(i) >> 3] &= ~(1 << ((i) & 7)))
 
+#define PMM_MEM_FLAG_ZEROED				1
+
 size_t pmm_init(
 	e820_reg_t* regs,
 	size_t num_regs,
