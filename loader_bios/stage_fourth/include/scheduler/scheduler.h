@@ -76,5 +76,6 @@ status_t scheduler_find_task(scheduler_task_id_t* id, scheduler_task_t** task, s
 status_t scheduler_remove_task(scheduler_task_id_t* id);
 
 XTRN_C void LOADERCALL scheduler_yield(void);
+XTRN_C void LOADERCALL scheduler_enable_task_switching(void);
 
 #endif

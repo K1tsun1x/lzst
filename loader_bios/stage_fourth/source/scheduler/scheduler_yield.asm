@@ -31,6 +31,7 @@ extern SCHEDULER_QUEUE_READY
 extern sys_osxsave_present
 extern sys_fpu_present
 
+; FIXME: no cr3 switch
 ; void LOADERCALL scheduler_yield(void)
 global scheduler_yield
 scheduler_yield:
@@ -69,6 +70,7 @@ scheduler_yield:
 	jz .save_cur_fp_regs_fpu
 
 	xor ecx, ecx
+	xor edx, edx
 	xgetbv
 	xsave [edi]
 	jmp .after_save_cur_fp_regs
