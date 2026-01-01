@@ -21,9 +21,7 @@ status_t scheduler_add_task(scheduler_task_t* task) {
 
 	task = &(*queue)[index];
 
-	// FIXME: no cr3 support
-	paging_pde_t* task_dir = (paging_pde_t*)(read_cr3() & PAGING_MASK_PDE_ADDRESS);
-
+	paging_pde_t* task_dir = (paging_pde_t*)(task->cr3 & PAGING_MASK_PDE_ADDRESS);
 	task->default_regs.sp -= sizeof(uintptr_t);
 	vmm_copy_memory(
 		task_dir,

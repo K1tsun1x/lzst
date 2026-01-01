@@ -35,6 +35,7 @@ status_t scheduler_create_task(
 	scheduler_task_def_regs_t* def_regs,
 	scheduler_task_state_t state,
 	uint32_t flags,
+	size_t cr3,
 	scheduler_task_t* task
 );
 

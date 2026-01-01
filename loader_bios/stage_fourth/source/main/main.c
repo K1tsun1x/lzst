@@ -340,14 +340,26 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 	scheduler_task_def_regs_t task2_def_regs = SCHEDULER_STATIC_DEFAULT_TASK_DEF_REGS(task2_stack_bottom + 0x10000, (uint32_t)task2);
 
 	scheduler_task_t t1;
-	status = scheduler_create_task(&task1_def_regs, SCHEDULER_TASK_STATE_READY, SCHEDULER_TASK_FLAG_NO_AUTOREMOVE, &t1);
+	status = scheduler_create_task(
+		&task1_def_regs,
+		SCHEDULER_TASK_STATE_READY,
+		SCHEDULER_TASK_FLAG_NO_AUTOREMOVE,
+		read_cr3(),
+		&t1
+	);
 	if (status != STATUS_OK) {
 		tty_printf("\x1b[91mError: failed to create task(1) (status: %?)!\n", status);
 		panic_halt();
 	}
 	
 	scheduler_task_t t2;
-	status = scheduler_create_task(&task2_def_regs, SCHEDULER_TASK_STATE_READY, SCHEDULER_TASK_FLAG_NO_AUTOREMOVE, &t2);
+	status = scheduler_create_task(
+		&task2_def_regs,
+		SCHEDULER_TASK_STATE_READY,
+		SCHEDULER_TASK_FLAG_NO_AUTOREMOVE,
+		read_cr3(),
+		&t2
+	);
 	if (status != STATUS_OK) {
 		tty_printf("\x1b[91mError: failed to create task(2) (status: %?)!\n", status);
 		panic_halt();

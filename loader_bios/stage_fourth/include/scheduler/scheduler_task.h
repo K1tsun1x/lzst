@@ -31,6 +31,7 @@ typedef struct _scheduler_task_t {
 	
 	// For task switching
 	struct _scheduler_task_t*	next;
+	size_t						cr3;
 } scheduler_task_t;
 #pragma pack(pop)
 

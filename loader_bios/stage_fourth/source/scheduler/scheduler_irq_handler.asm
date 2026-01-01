@@ -4,6 +4,7 @@ bits 32
 %define TASK_OFFSET_DEF_REGS			0x04
 %define TASK_OFFSET_STATE				0x40
 %define TASK_OFFSET_NEXT				0x4c
+%define TASK_OFFSET_CR3					0x50
 
 %define TASK_DEF_REGS_OFFSET_DS			0x00
 %define TASK_DEF_REGS_OFFSET_SS			0x04
@@ -35,7 +36,6 @@ extern sys_fpu_present
 extern virt_timer_irq_handler
 extern virt_int_ctrl_eoi
 
-; FIXME: no cr3 switch
 global scheduler_irq_handler
 scheduler_irq_handler:
 	pusha
@@ -90,11 +90,17 @@ scheduler_irq_handler:
 
 	mov dword [esi + TASK_OFFSET_STATE], TASK_STATE_READY
 
+	mov eax, cr3
+	mov [esi + TASK_OFFSET_CR3], eax
+
 	push dword [esi + TASK_OFFSET_NEXT]
 	pop dword [SCHEDULER_CURRENT_TASK]
 .after_save_cur_def_regs:
 	mov eax, [SCHEDULER_CURRENT_TASK]
 	mov dword [eax + TASK_OFFSET_STATE], TASK_STATE_RUNNING
+
+	mov ecx, [eax + TASK_OFFSET_CR3]
+	mov cr3, ecx
 
 	mov ds, [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_DS]
 	mov es, [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_DS]
