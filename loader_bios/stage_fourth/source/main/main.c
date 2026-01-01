@@ -390,7 +390,7 @@ void task1(void) {
 		tty_printf("\x1b[105;93mFirst: %#010x, FLAGS: %#010x\n", i, read_flags());
 		scheduler_yield();
 
-		virt_timer_delay(250);
+		// virt_timer_delay(250);
 	}
 }
 
@@ -399,7 +399,7 @@ void task2(void) {
 		tty_printf("\x1b[104;92mSecond: %#010x, FLAGS: %#010x\n", i, read_flags());
 		scheduler_yield();
 
-		virt_timer_delay(250);
+		// virt_timer_delay(250);
 	}
 }
 

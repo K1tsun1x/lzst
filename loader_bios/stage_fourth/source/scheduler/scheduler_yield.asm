@@ -44,15 +44,20 @@ scheduler_yield:
 	mov [esp + 16], eax	; IP = AX => IP = FLAGS
 	pop ecx
 	pop eax
-	
-	cli
-	; FIXME: DS can be != 0x10!!!
-	cmp dword [SCHEDULER_CURRENT_TASK], 0
-	je .after_save_cur
 
 	pusha
 	push ss
 	push ds
+
+	cli
+	mov ax, 0x10
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
+	
+	cmp dword [SCHEDULER_CURRENT_TASK], 0
+	je .after_save_cur
 
 	mov esi, [SCHEDULER_CURRENT_TASK]
 	cmp dword [esi + TASK_OFFSET_FP_REGS], 0
@@ -74,7 +79,7 @@ scheduler_yield:
 	fxsave [edi]
 .after_save_cur_fp_regs:
 	pop dword [esi + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_DS]
-	pop dword [esi + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_SS]		; FIXME: potential danger zone
+	pop dword [esi + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_SS]
 	pop dword [esi + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_DI]
 	pop dword [esi + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_SI]
 	pop dword [esi + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_BP]
@@ -116,6 +121,13 @@ scheduler_yield:
 	mov edx, [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_DX]
 	mov ecx, [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_CX]
 	mov eax, [eax + TASK_OFFSET_DEF_REGS + TASK_DEF_REGS_OFFSET_AX]
+
+	; We write the same thing to the stack to restore it before IRET.
+	; Needed for setting up kernel segments, so that if the switch does not happen,
+	; the registers remain the same
+	pusha
+	push ss
+	push ds
 	jmp .after_load_next
 .after_save_cur:
 	push esi
@@ -128,4 +140,12 @@ scheduler_yield:
 	pop dword [SCHEDULER_CURRENT_TASK]
 	jmp .after_save_cur_def_regs
 .after_load_next:
+	pop eax
+	mov ds, eax
+	mov es, eax
+	mov fs, eax
+	mov gs, eax
+	pop eax
+	mov ss, eax
+	popa
 	iret
