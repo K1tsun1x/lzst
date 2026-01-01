@@ -1,5 +1,7 @@
 bits 32
 
+%define SCHEDULER_QUANTUM_TICKS			10
+
 %define TASK_OFFSET_FP_REGS				0x00
 %define TASK_OFFSET_DEF_REGS			0x04
 %define TASK_OFFSET_STATE				0x40
@@ -36,6 +38,9 @@ extern sys_fpu_present
 extern virt_timer_irq_handler
 extern virt_int_ctrl_eoi
 
+global SCHEDULER_TICKS
+SCHEDULER_TICKS:			dd 0
+
 global scheduler_irq_handler
 scheduler_irq_handler:
 	pusha
@@ -50,6 +55,14 @@ scheduler_irq_handler:
 
 	cmp byte [SCHEDULER_ENABLE_TASK_SWITCHING], 0
 	je .after_load_next
+
+	inc dword [SCHEDULER_TICKS]
+	
+	; Has the required number of ticks passed to switch the task?
+	cmp dword [SCHEDULER_TICKS], SCHEDULER_QUANTUM_TICKS
+	jb .after_load_next
+
+	mov dword [SCHEDULER_TICKS], 0
 	
 	cmp dword [SCHEDULER_CURRENT_TASK], 0
 	je .after_save_cur

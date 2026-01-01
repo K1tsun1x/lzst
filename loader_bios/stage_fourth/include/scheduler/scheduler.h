@@ -12,7 +12,7 @@
 #include <virt-int-ctrl/virt-int-ctrl.h>
 #include "scheduler_task.h"
 
-#define SCHEDULER_QUANTUM_TICKS									1000
+// #define SCHEDULER_QUANTUM_TICKS									10
 #define SCHEDULER_MAX_TASKS_REMOVED_PER_CLEANUP					10
 #define SCHEDULER_MAX_TASKS										32
 
