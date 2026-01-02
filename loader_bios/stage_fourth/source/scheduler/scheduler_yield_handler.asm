@@ -210,7 +210,7 @@ scheduler_yield_handler:
 .nxt_ss:					dd 0
 .nxt_sp:					dd 0
 .nxt_ds:					dd 0
-.tmp:						dd 0
 .nxt_ip:					dd 0
 .nxt_cs:					dd 0
 .nxt_flags:					dd 0
+.tmp:						dd 0
