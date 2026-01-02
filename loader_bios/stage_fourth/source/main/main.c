@@ -336,15 +336,15 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		panic_halt();
 	}
 
-	scheduler_task_def_regs_t task1_def_regs = SCHEDULER_STATIC_DEFAULT_TASK_DEF_REGS(task1_stack_bottom + 0x10000, (uint32_t)task1);
-	scheduler_task_def_regs_t task2_def_regs = SCHEDULER_STATIC_DEFAULT_TASK_DEF_REGS(task2_stack_bottom + 0x10000, (uint32_t)task2);
+	size_t cr3 = read_cr3();
+	scheduler_task_def_regs_t task1_def_regs = SCHEDULER_STATIC_DEFAULT_TASK_DEF_REGS(cr3, task1_stack_bottom + 0x10000, (uint32_t)task1);
+	scheduler_task_def_regs_t task2_def_regs = SCHEDULER_STATIC_DEFAULT_TASK_DEF_REGS(cr3, task2_stack_bottom + 0x10000, (uint32_t)task2);
 
 	scheduler_task_t t1;
 	status = scheduler_create_task(
 		&task1_def_regs,
 		SCHEDULER_TASK_STATE_READY,
 		SCHEDULER_TASK_FLAG_NO_AUTOREMOVE,
-		read_cr3(),
 		&t1
 	);
 	if (status != STATUS_OK) {
@@ -357,7 +357,6 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		&task2_def_regs,
 		SCHEDULER_TASK_STATE_READY,
 		SCHEDULER_TASK_FLAG_NO_AUTOREMOVE,
-		read_cr3(),
 		&t2
 	);
 	if (status != STATUS_OK) {
@@ -385,8 +384,8 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 	tty_printf("OFFSET OF task.state = %#010x\n", OFFSET_OF(scheduler_task_t, state));
 	tty_printf("OFFSET OF task.next = %#010x\n", OFFSET_OF(scheduler_task_t, next));
 
-	// scheduler_yield();
-	scheduler_enable_task_switching();
+	scheduler_yield();
+	// scheduler_enable_task_switching();
 	
 	tty_prints_positive("3 seconds...\n");
 	virt_timer_delay(1000);
@@ -401,6 +400,7 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 void task1(void) {
 	for (size_t i = 0; ; i++) {
 		tty_printf("\x1b[105;93mFirst: %#010x, FLAGS: %#010x\n", i, read_flags());
+		scheduler_yield();
 		// scheduler_yield();
 
 		// virt_timer_delay(250);
@@ -410,6 +410,7 @@ void task1(void) {
 void task2(void) {
 	for (size_t i = 0x80000000; ; i++) {
 		tty_printf("\x1b[104;92mSecond: %#010x, FLAGS: %#010x\n", i, read_flags());
+		scheduler_yield();
 		// scheduler_yield();
 
 		// virt_timer_delay(250);

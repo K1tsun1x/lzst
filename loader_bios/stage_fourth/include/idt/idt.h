@@ -52,6 +52,8 @@
 
 #define IDT_NUM_ENTRIES				256
 
+#define IDT_VECTOR_SCHEDULER_YIELD_HANDLER			0x40
+
 #pragma pack(push, 1)
 typedef struct _idt32_t {
 	uint16_t			offset_low;

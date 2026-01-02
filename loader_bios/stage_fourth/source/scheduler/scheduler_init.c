@@ -5,6 +5,8 @@ XTRN_ONLY_CPP scheduler_task_t* SCHEDULER_QUEUE_BLOCKED = NULL;
 XTRN_ONLY_CPP scheduler_task_t* SCHEDULER_QUEUE_TERMINATED = NULL;
 XTRN_ONLY_CPP scheduler_task_t* SCHEDULER_CURRENT_TASK = NULL;
 
+XTRN_C void scheduler_yield_handler(void);
+
 status_t scheduler_init(uint8_t timer_vector) {
 	if (SCHEDULER_QUEUE_READY) {
 		dynarr_free(SCHEDULER_QUEUE_READY);
@@ -38,5 +40,6 @@ status_t scheduler_init(uint8_t timer_vector) {
 	}
 
 	scheduler_remap(timer_vector);
+	idt32_set_entry(IDT_VECTOR_SCHEDULER_YIELD_HANDLER, (uint32_t)scheduler_yield_handler, 0x08, IDT_TYPE_INT32, IDT_FLAG_PRESENT);
 	return STATUS_OK;
 }

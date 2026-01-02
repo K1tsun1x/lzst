@@ -4,7 +4,6 @@ status_t scheduler_create_task(
 	scheduler_task_def_regs_t* def_regs,
 	scheduler_task_state_t state,
 	uint32_t flags,
-	size_t cr3,
 	scheduler_task_t* task
 ) {
 	if (!def_regs) return STATUS_INVALID_PARAMETER_1;
@@ -20,6 +19,5 @@ status_t scheduler_create_task(
 	task->state = state;
 	task->flags = flags;
 	task->ticks_remaining = 0;
-	task->cr3 = cr3;
 	return STATUS_OK;
 }
