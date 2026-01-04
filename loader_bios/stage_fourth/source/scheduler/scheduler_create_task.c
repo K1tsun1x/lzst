@@ -9,9 +9,14 @@ status_t scheduler_create_task(
 	if (!def_regs) return STATUS_INVALID_PARAMETER_1;
 	if (!task) return STATUS_INVALID_PARAMETER_4;
 
-	if (sys_osxsave_present() || sys_fpu_present()) {
+	bool osxsave_present = sys_osxsave_present();
+	bool fpu_present = sys_fpu_present();
+	if (osxsave_present || fpu_present) {
 		task->fp_regs = pmm_allocate_memory(SCHEDULER_TASK_SIZE_FP_REGS, 0);
 		if (!task->fp_regs) return STATUS_NO_MEMORY;
+
+		if (osxsave_present) xsave(task->fp_regs);
+		else if (fpu_present) fxsave(task->fp_regs);
 	}
 
 	task->default_regs = *def_regs;

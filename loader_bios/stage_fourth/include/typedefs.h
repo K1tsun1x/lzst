@@ -30,6 +30,7 @@
 #define __cdecl						__attribute__((__cdecl__))
 #define ALIGNED(...)				__attribute__((__aligned__(__VA_ARGS__)))
 #define NORETURN					__attribute__((__noreturn__))
+#define SECTION(...)				__attribute__((__section__(__VA_ARGS__)))
 #define UNREACHABLE					__builtin_unreachable
 
 #ifdef __x86_64__

@@ -1,11 +1,25 @@
 #include <main/main.h>
 
+const uint8_t ALIGNED(0x1000) task1_code[VMM_PAGE_SIZE] = {
+	0xB8, 0x00, 0x00, 0x00, 0x00, 0xB1, '-', 0xCD, 0x41, 0x90, 0x90, 0xEB, 0xF3
+};
+
+const uint8_t ALIGNED(0x1000) task2_code[VMM_PAGE_SIZE] = {
+	0xB8, 0x00, 0x00, 0x00, 0x00, 0xB1, '+', 0xCD, 0x41, 0x90, 0x90, 0xEB, 0xF3
+};
+
 void stage_fourth_startup(boot_info_t* bootloader_info) {
 	gdtr_load(&GDTR);
 
 	exceptions_init();
 	irqs_init();
 	idt32_init();
+
+	sw_int_init();
+
+	const uintptr_t kernel_base = (uintptr_t)&__PTR_BASE__;
+	const uintptr_t kernel_end = (uintptr_t)&__PTR_END__;
+	const uintptr_t kernel_size = kernel_end - kernel_base;
 
 	sys_init(
 		&bootloader_info->video_mode,
@@ -58,7 +72,7 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 	tty_printf("Boot drive:\t\t\t\t\x1b[94m%#x\x1b[0m\n", bootloader_info->boot_drive);
 
 	const e820_reg_t RESERVED_REGS[] = {
-		{	// IVT, BDA
+		{	// IVT, BDA + kernel stack
 			0x0000000000000000,
 			0x0000000000100000,
 			E820_REG_TYPE_RESERVED
@@ -84,8 +98,8 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 			E820_REG_TYPE_RESERVED
 		},
 		{	// The fourth stage
-			(uint64_t)(uintptr_t)&__PTR_BASE__ - 0x1000,
-			(uint64_t)((uintptr_t)&__PTR_END__ - (uintptr_t)&__PTR_BASE__) + 0x1000,
+			(uint64_t)kernel_base,
+			(uint64_t)kernel_size,
 			E820_REG_TYPE_RESERVED
 		},
 		{	// Framebuffer
@@ -311,7 +325,7 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 
 	virt_timer_set_tick_ms(TIMER_TICK_MS);
 
-	tty_prints("Scheduler:\t\t\t\t\t");
+	tty_prints("Scheduler:\t\t\t\t");
 	status = scheduler_init(timer_vector);
 	if (status == STATUS_OK) tty_prints_positive("[INITIALIZED]\n");
 	else {
@@ -323,22 +337,166 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 	tty_prints("Paging:\t\t\t\t\t");
 	// Identity mapping (1:1)
 	memset(&PDE[0], 0, sizeof(PDE));
-	paging_map_pages(PDE, 0, 0, 0x100000, PAGING_PTE_FLAG_PRESENT | PAGING_PTE_FLAG_READ_WRITE);
+	if (!paging_map_pages(PDE, 0, 0, 0x100000, PAGING_PTE_FLAG_PRESENT | PAGING_PTE_FLAG_READ_WRITE)) {
+		tty_prints_negative("[NOT ENABLED]\n");
+		tty_prints_negative("Error: failed to set identity mapping (1:1)!\n");
+		panic_halt();
+	}
 	paging_load_directory(PDE);
 	paging_enable();
 
 	tty_prints_positive("[ENABLED]\n");
 
-	const uintptr_t task1_stack_bottom = (uintptr_t)pmm_allocate_memory(0x10000, 0);
-	const uintptr_t task2_stack_bottom = (uintptr_t)pmm_allocate_memory(0x10000, 0);
-	if (!task1_stack_bottom || !task2_stack_bottom) {
-		tty_prints_negative("Error: failed to allocate stack for task(s)!\n");
+	const uintptr_t task1_base = 0x400000;
+	const uintptr_t task2_base = 0x400000;
+
+	paging_pde_t* task1_dir = (paging_pde_t*)pmm_allocate_memory(PAGING_DIRECTORY_SIZE, PMM_MEM_FLAG_ZEROED);
+	paging_pde_t* task2_dir = (paging_pde_t*)pmm_allocate_memory(PAGING_DIRECTORY_SIZE, PMM_MEM_FLAG_ZEROED);
+	if (!task1_dir || !task2_dir) {
+		tty_prints_negative("Error: failed to allocate page dir(s) for task(s)!\n");
 		panic_halt();
 	}
 
-	size_t cr3 = read_cr3();
-	scheduler_task_def_regs_t task1_def_regs = SCHEDULER_STATIC_DEFAULT_TASK_DEF_REGS(cr3, task1_stack_bottom + 0x10000, (uint32_t)task1);
-	scheduler_task_def_regs_t task2_def_regs = SCHEDULER_STATIC_DEFAULT_TASK_DEF_REGS(cr3, task2_stack_bottom + 0x10000, (uint32_t)task2);
+	tty_printf("T1 DIR: %#010x\n", task1_dir);
+	tty_printf("T2 DIR: %#010x\n", task2_dir);
+
+	// map page dirs
+
+	if (!paging_map_pages(
+		task1_dir,
+		(uintptr_t)task1_dir, 0,
+		ALIGN_UP_P2(PAGING_DIRECTORY_SIZE, VMM_PAGE_SIZE) / VMM_PAGE_SIZE,
+		PAGING_PDE_FLAG_PRESENT | PAGING_PDE_FLAG_READ_WRITE
+	)) {
+		tty_prints_negative("Error: failed to map page dir for task1!\n");
+		panic_halt();
+	}
+
+	if (!paging_map_pages(
+		task2_dir,
+		(uintptr_t)task2_dir, 0,
+		ALIGN_UP_P2(PAGING_DIRECTORY_SIZE, VMM_PAGE_SIZE) / VMM_PAGE_SIZE,
+		PAGING_PDE_FLAG_PRESENT | PAGING_PDE_FLAG_READ_WRITE
+	)) {
+		tty_prints_negative("Error: failed to map page dir for task2!\n");
+		panic_halt();
+	}
+
+	// map kernel
+
+	if (!paging_map_pages(
+		task1_dir,
+		kernel_base,
+		kernel_base,
+		ALIGN_UP_P2(kernel_size, VMM_PAGE_SIZE) / VMM_PAGE_SIZE,
+		PAGING_PDE_FLAG_PRESENT | PAGING_PDE_FLAG_READ_WRITE
+	)) {
+		tty_prints_negative("Error: failed to map kernel for task1!\n");
+		panic_halt();
+	}
+
+	if (!paging_map_pages(
+		task2_dir,
+		kernel_base,
+		kernel_base,
+		ALIGN_UP_P2(kernel_size, VMM_PAGE_SIZE) / VMM_PAGE_SIZE,
+		PAGING_PDE_FLAG_PRESENT | PAGING_PDE_FLAG_READ_WRITE
+	)) {
+		tty_prints_negative("Error: failed to map kernel for task2!\n");
+		panic_halt();
+	}
+
+	// map task code sections
+
+	tty_printf("T1C: %#010x\n", (uintptr_t)task1_code);
+	tty_printf("T2C: %#010x\n", (uintptr_t)task2_code);
+
+	if (!paging_map_pages(
+		task1_dir,
+		(uintptr_t)&task1_code[0],
+		task1_base,
+		1,					// only first page for test!!!
+		PAGING_PDE_FLAG_PRESENT | PAGING_PDE_FLAG_READ_WRITE
+	)) {
+		tty_prints_negative("Error: failed to map code section for task1!\n");
+		panic_halt();
+	}
+
+	if (!paging_map_pages(
+		task2_dir,
+		(uintptr_t)&task2_code[0],
+		task2_base,
+		1,					// only first page for test!!!
+		PAGING_PDE_FLAG_PRESENT | PAGING_PDE_FLAG_READ_WRITE
+	)) {
+		tty_prints_negative("Error: failed to map code section for task2!\n");
+		panic_halt();
+	}
+
+	// map stack
+
+	const uintptr_t task1_stack_btm = vmm_allocate_memory(
+		task1_dir,
+		VMM_PAGE_SIZE * 2,
+		PAGING_PTE_FLAG_PRESENT | PAGING_PTE_FLAG_READ_WRITE,
+		0
+	);
+
+	const uintptr_t task2_stack_btm = vmm_allocate_memory(
+		task2_dir,
+		VMM_PAGE_SIZE * 2,
+		PAGING_PTE_FLAG_PRESENT | PAGING_PTE_FLAG_READ_WRITE,
+		0
+	);
+
+	// FIXME: well, obviously, not good decision, but idk how to change that
+	// map LAPIC regs
+	const uintptr_t lapic_base = (uintptr_t)lapic_get_base();
+	if (!paging_map_pages(
+		task1_dir,
+		lapic_base,
+		lapic_base,
+		1,
+		PAGING_PTE_FLAG_PRESENT | PAGING_PTE_FLAG_READ_WRITE)
+	) {
+		tty_prints_negative("Error: failed to map LAPIC regs for task1!\n");
+		panic_halt();
+	}
+	
+	if (!paging_map_pages(
+		task2_dir,
+		lapic_base,
+		lapic_base,
+		1,
+		PAGING_PTE_FLAG_PRESENT | PAGING_PTE_FLAG_READ_WRITE)
+	) {
+		tty_prints_negative("Error: failed to map LAPIC regs for task2!\n");
+		panic_halt();
+	}
+
+	if (task1_stack_btm == UINTPTR_MAX) {
+		tty_prints_negative("Error: failed to allocate stack for task1!\n");
+		panic_halt();
+	}
+
+	if (task2_stack_btm == UINTPTR_MAX) {
+		tty_prints_negative("Error: failed to allocate stack for task2!\n");
+		panic_halt();
+	}
+
+	const uintptr_t task1_stack_top = task1_stack_btm + VMM_PAGE_SIZE * 2;
+	const uintptr_t task2_stack_top = task2_stack_btm + VMM_PAGE_SIZE * 2;
+
+	scheduler_task_def_regs_t task1_def_regs = SCHEDULER_STATIC_DEFAULT_TASK_DEF_REGS(
+		(uint32_t)task1_dir,
+		task1_stack_top,
+		task1_base
+	);
+	scheduler_task_def_regs_t task2_def_regs = SCHEDULER_STATIC_DEFAULT_TASK_DEF_REGS(
+		(uint32_t)task2_dir,
+		task2_stack_top,
+		task2_base
+	);
 
 	scheduler_task_t t1;
 	status = scheduler_create_task(
@@ -376,15 +534,9 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		panic_halt();
 	}
 
-	tty_printf("T1: %#010x/%#010x\n", (uintptr_t)task1, (uintptr_t)t1.default_regs.ip);
-	tty_printf("T2: %#010x/%#010x\n", (uintptr_t)task2, (uintptr_t)t2.default_regs.ip);
+	tty_printf("T1: %#010x/%#010x\n", (uintptr_t)task1_base, (uintptr_t)t1.default_regs.ip);
+	tty_printf("T2: %#010x/%#010x\n", (uintptr_t)task2_base, (uintptr_t)t2.default_regs.ip);
 
-	tty_printf("OFFSET OF sys_info.fpu_present = %#010x\n", OFFSET_OF(sys_info_t, fpu_present));
-	tty_printf("OFFSET OF sys_info.osxsave_present = %#010x\n", OFFSET_OF(sys_info_t, osxsave_present));
-	tty_printf("OFFSET OF task.state = %#010x\n", OFFSET_OF(scheduler_task_t, state));
-	tty_printf("OFFSET OF task.next = %#010x\n", OFFSET_OF(scheduler_task_t, next));
-
-	// scheduler_yield();
 	scheduler_enable_task_switching();
 	
 	tty_prints_positive("3 seconds...\n");
@@ -395,24 +547,6 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 	virt_timer_delay(1000);
 	tty_prints_negative("Reached EOF.\n");
 	panic_halt();
-}
-
-void task1(void) {
-	for (size_t i = 0; ; i++) {
-		tty_printf("\x1b[105;93mFirst: %#010x, FLAGS: %#010x\n", i, read_flags());
-		// if (i % 1000 == 0) scheduler_yield();
-
-		// virt_timer_delay(250);
-	}
-}
-
-void task2(void) {
-	for (size_t i = 0x80000000; ; i++) {
-		tty_printf("\x1b[104;92mSecond: %#010x, FLAGS: %#010x\n", i, read_flags());
-		// if (i % 1000 == 0) scheduler_yield();
-
-		// virt_timer_delay(250);
-	}
 }
 
 gdt32_t ALIGNED(16) GDT[3] = {

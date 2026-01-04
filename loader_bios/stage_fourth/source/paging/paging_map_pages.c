@@ -3,7 +3,7 @@
 // FIXME: no VMM_VIRT_TO_PHYS
 bool paging_map_pages(paging_pde_t* directory, uintptr_t src_phys, uintptr_t dst_virt, size_t count, uint32_t flags) {
 	if ((src_phys & 0x3ff) || (dst_virt & 0x3ff)) return false;
-	
+
 	size_t i_phys = (src_phys & 0xfffff000) >> 12;
 	size_t i_virt = (dst_virt & 0xfffff000) >> 12;
 

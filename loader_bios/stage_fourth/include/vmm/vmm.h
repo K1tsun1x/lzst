@@ -35,6 +35,7 @@ uintptr_t vmm_allocate_memory(paging_pde_t* directory, size_t num_bytes, uint32_
 
 bool vmm_free_memory(paging_pde_t* directory, uintptr_t virt_address);
 
-bool vmm_copy_memory(const paging_pde_t* dst_directory, uintptr_t dst_address, const void* src, size_t count);
+bool vmm_copy_memory_to(const paging_pde_t* dst_directory, uintptr_t dst_address, const void* src, size_t count);
+bool vmm_copy_memory_from(const paging_pde_t* src_directory, void* dst, uintptr_t src_address, size_t count);
 
 #endif

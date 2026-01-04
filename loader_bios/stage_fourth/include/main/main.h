@@ -7,6 +7,7 @@
 #include <gfx/gfx.h>
 #include <tty/tty.h>
 #include <sys/sys.h>
+#include <sw_int/sw_int.h>
 #include <pmm/pmm.h>
 #include <fpu/fpu.h>
 #include <paging/paging.h>
@@ -25,9 +26,6 @@
 #include <dynarr/dynarr.h>
 
 #define TIMER_TICK_MS				1
-
-extern void task1(void);
-extern void task2(void);
 
 extern uint32_t __PTR_BASE__[];
 extern uint32_t __PTR_END__[];

@@ -39,5 +39,7 @@ SECTIONS {
 		*(.rodata)
 	}
 
+	. = ALIGN(8);
+
 	__PTR_END__ = .;
 }

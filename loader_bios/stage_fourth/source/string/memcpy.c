@@ -1,6 +1,5 @@
 #include <string.h>
 
-#include <tty/tty.h>
 void* __cdecl memcpy(void* dest, const void* src, size_t count) {
 	if (!count || dest == src) return dest;
 

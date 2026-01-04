@@ -13,28 +13,25 @@ bool pmm_find_allocated_memory(void* ptr, pmm_reg_t** reg, size_t* index) {
 
 	pmm_reg_t* creg = (pmm_reg_t*)PMM_FIRST_REGION_BASE_ADDRESS;
 	while (creg != NULL) {
-		const uintptr_t reg_base = (uintptr_t)creg->base_address;
+		pmm_page_t* page_infos = (pmm_page_t*)((uintptr_t)creg + (uintptr_t)creg->page_info_offset);
+		uintptr_t pages_start = (uintptr_t)creg + (uintptr_t)creg->page_offset;
+		const uintptr_t pages_end = pages_start + PMM_PAGE_SIZE * creg->num_total_pages;
 		
-		uint8_t* bmp = (uint8_t*)((uintptr_t)creg + (uintptr_t)creg->bitmap_offset);
-		pmm_page_t* page_info = (pmm_page_t*)((uintptr_t)creg + (uintptr_t)creg->page_info_offset);
-		uintptr_t base_pages = (uintptr_t)creg + (uintptr_t)creg->page_offset;
-		const uintptr_t end_pages = base_pages + PMM_PAGE_SIZE * creg->num_total_pages;
-
-		const uintptr_t ptr_offset = (uintptr_t)ptr - base_pages;
+		const uintptr_t ptr_offset = (uintptr_t)ptr - pages_start;
 		const size_t i_start_ptr = ptr_offset / PMM_PAGE_SIZE;
 
 		if (
-			(uintptr_t)ptr < base_pages ||
-			(uintptr_t)ptr >= end_pages ||
+			(uintptr_t)ptr < pages_start ||
+			(uintptr_t)ptr >= pages_end ||
 			i_start_ptr >= creg->num_total_pages ||
-			!PMM_BMP_PAGE_BUSY(bmp, i_start_ptr) ||
-			!page_info[i_start_ptr].chain_length
+			!(page_infos[i_start_ptr].flags & PMM_PAGE_FLAG_BUSY) ||
+			!page_infos[i_start_ptr].chain_length
 		) {
 			creg = (pmm_reg_t*)(uintptr_t)creg->next_reg_address;
 			continue;
 		}
 
-		if (reg) *reg = (pmm_reg_t*)reg_base;
+		if (reg) *reg = creg;
 		if (index) *index = i_start_ptr;
 
 		EXIT_CRITICAL_SECTION();

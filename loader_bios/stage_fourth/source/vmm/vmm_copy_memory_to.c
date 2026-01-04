@@ -1,6 +1,6 @@
 #include <vmm/vmm.h>
 
-bool vmm_copy_memory(const paging_pde_t* dst_directory, uintptr_t dst_address, const void* src, size_t count) {
+bool vmm_copy_memory_to(const paging_pde_t* dst_directory, uintptr_t dst_address, const void* src, size_t count) {
 	if (!dst_directory) return false;
 
 	uintptr_t cur_dst = dst_address;

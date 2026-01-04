@@ -9,9 +9,6 @@
 #include "pmm_page.h"
 
 #define PMM_PAGE_SIZE					0x1000
-#define PMM_BMP_PAGE_BUSY(bmp, i)		(((uint8_t*)bmp)[(i) >> 3] & (1 << ((i) & 7)))
-#define PMM_BMP_MARK_PAGE_BUSY(bmp, i)	(((uint8_t*)bmp)[(i) >> 3] |= (1 << ((i) & 7)))
-#define PMM_BMP_MARK_PAGE_FREE(bmp, i)	(((uint8_t*)bmp)[(i) >> 3] &= ~(1 << ((i) & 7)))
 
 #define PMM_MEM_FLAG_ZEROED				1
 
@@ -31,7 +28,6 @@ bool pmm_init_region(
 size_t pmm_compute_region_info(
 	uint64_t base,
 	uint64_t length,
-	uint64_t* first_bitmap,
 	uint64_t* first_page_info,
 	uint64_t* first_page
 );

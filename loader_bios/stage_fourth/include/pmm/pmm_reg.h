@@ -11,10 +11,9 @@ typedef struct _pmm_reg_t {
 	uint64_t			num_free_pages;
 	uint64_t			num_busy_pages;
 	uint64_t			num_total_pages;
-	uint64_t			bitmap_offset;			// offset
 	uint64_t			page_info_offset;		// offset
 	uint64_t			page_offset;			// offset
-	uint64_t			next_reg_address;		// offset
+	uint64_t			next_reg_address;
 } pmm_reg_t;
 #pragma pack(pop)
 

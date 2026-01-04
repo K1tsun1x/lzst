@@ -32,11 +32,10 @@ bool paging_ensure_tables_present(paging_pde_t* directory, size_t start_index, s
 			continue;
 		}
 
-		uintptr_t tmp_address = (uintptr_t)pmm_allocate_memory(PAGING_TABLE_SIZE, 0);
+		uintptr_t tmp_address = (uintptr_t)pmm_allocate_memory(PAGING_TABLE_SIZE, PMM_MEM_FLAG_ZEROED);
 		if (!tmp_address) break;
 
 		directory[i] = tmp_address | flags;
-		memset((void*)tmp_address, 0, PAGING_TABLE_SIZE);
 
 		allocated_entries[num_allocated].index = i;
 		allocated_entries[num_allocated++].address = tmp_address;

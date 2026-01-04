@@ -32,7 +32,7 @@ extern virt_int_ctrl_eoi
 extern tty_putchar
 
 irq_global_handler_stub:
-	pushad
+	pusha
 	push ds
 	push es
 	push fs
@@ -53,7 +53,7 @@ irq_global_handler_stub:
 	pop fs
 	pop es
 	pop ds
-	popad
+	popa
 
 	sub dword [esp], 32
 	call [virt_int_ctrl_eoi]

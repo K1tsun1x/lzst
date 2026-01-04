@@ -1,13 +1,23 @@
 bits 32
 
+%define SW_INT_SCHEDULER_YIELD	0
+%define SW_INT_TTY				1
+
+%macro SW_INT					1
+global sw_int_stub%+%1
+sw_int_stub%+%1:
+	mov dword [int_index], %1+0x40
+	jmp sw_int_global_handler_stub
+%endmacro
+
 extern KERNEL_CR3
-extern SCHEDULER_IRQ
 
-extern scheduler_tick
-extern virt_int_ctrl_eoi
+extern sw_int_global_handler
 
-global scheduler_irq_handler
-scheduler_irq_handler:
+SW_INT			SW_INT_SCHEDULER_YIELD
+SW_INT			SW_INT_TTY
+
+sw_int_global_handler_stub:
 	; FIXME: use of global variables (problem for SMP)
 	; check if there was a privilege level change
 	mov [.tmp], eax
@@ -85,6 +95,9 @@ scheduler_irq_handler:
 	push dword [.seg_ds]
 	push dword [.reg_cr3]
 
+	; push int index
+	push dword [int_index]
+
 	; push address of structure
 	push esp
 
@@ -92,9 +105,10 @@ scheduler_irq_handler:
 	push dword [.ring_switch]
 	
 	cld
-	call scheduler_tick
+	call sw_int_global_handler
 .pop_scheduler_tick_args:
-	add esp, 8
+	; remove ring_switch, address of structure, int index
+	add esp, 12
 
 	; pop cr3, ds, ss
 	pop dword [.reg_cr3]
@@ -115,10 +129,6 @@ scheduler_irq_handler:
 	pop dword [.reg_ip]
 	pop dword [.seg_cs]
 	pop dword [.reg_flags]
-.send_eoi:
-	push dword [SCHEDULER_IRQ]
-	call [virt_int_ctrl_eoi]
-	add esp, 4
 .return_back:
 	mov [.tmp], eax
 	; load cr3
@@ -163,3 +173,4 @@ scheduler_irq_handler:
 .seg_ds:					dd 0
 .reg_cr3:					dd 0
 .tmp:						dd 0
+int_index:					dd 0
