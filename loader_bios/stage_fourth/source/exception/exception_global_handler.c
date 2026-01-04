@@ -9,6 +9,7 @@ XTRN_C void exception_global_handler(isr_data_t* data) {
 	else {
 		tty_prints_negative("Error: unhandled exception!\n");
 		tty_print_isr_data(data);
-		panic_halt();
 	}
+
+	panic_halt();
 }

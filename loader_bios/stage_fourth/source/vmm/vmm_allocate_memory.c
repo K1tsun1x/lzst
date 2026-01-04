@@ -20,7 +20,7 @@ uintptr_t vmm_allocate_memory(paging_pde_t* directory, size_t num_bytes, uint32_
 
 	block_info->magic = VMM_BLOCK_INFO_MAGIC;
 	block_info->num_pages = num_pages;
-	if (!paging_map_pages(directory, (uintptr_t)block_info, block_info_virt_address, 1, PAGING_PTE_FLAG_READ_WRITE)) {
+	if (!paging_map_pages(directory, (uintptr_t)block_info, block_info_virt_address, 1, vmm_page_flags)) {
 		pmm_free_memory(block_info);
 		EXIT_CRITICAL_SECTION();
 		return UINTPTR_MAX;

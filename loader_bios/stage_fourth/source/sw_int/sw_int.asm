@@ -11,12 +11,12 @@ sw_int_stub%+%1:
 %endmacro
 
 extern KERNEL_CR3
-
 extern sw_int_global_handler
 
 SW_INT			SW_INT_SCHEDULER_YIELD
 SW_INT			SW_INT_TTY
 
+global sw_int_global_handler_stub
 sw_int_global_handler_stub:
 	; FIXME: use of global variables (problem for SMP)
 	; check if there was a privilege level change
@@ -95,7 +95,7 @@ sw_int_global_handler_stub:
 	push dword [.seg_ds]
 	push dword [.reg_cr3]
 
-	; push int index
+	; push int_index
 	push dword [int_index]
 
 	; push address of structure
@@ -107,7 +107,6 @@ sw_int_global_handler_stub:
 	cld
 	call sw_int_global_handler
 .pop_scheduler_tick_args:
-	; remove ring_switch, address of structure, int index
 	add esp, 12
 
 	; pop cr3, ds, ss
@@ -136,6 +135,9 @@ sw_int_global_handler_stub:
 	mov cr3, eax
 	mov eax, [.tmp]
 
+	test dword [.seg_cs], 3
+	jnz .return_back_new_pl
+.return_back_old_pl:
 	; load stack
 	mov ss, [.seg_ss]
 	mov esp, [.reg_sp]
@@ -147,19 +149,29 @@ sw_int_global_handler_stub:
 	mov fs, [.seg_ds]
 	mov gs, [.seg_ds]
 
-	; push IRET-frame
+	; prepare IRET-frame
 	push dword [.reg_flags]
 	push dword [.seg_cs]
 	push dword [.reg_ip]
+	iret
+.return_back_new_pl:
+	; set esp to end of tmp IRET frame
+	mov esp, .iret_frame_new_pl + 20
 
-	cmp byte [.ring_switch], 0
-	je .fin
+	mov ebp, [.reg_bp]
+	
+	; load segment registers
+	mov ds, [.seg_ds]
+	mov es, [.seg_ds]
+	mov fs, [.seg_ds]
+	mov gs, [.seg_ds]
 
-	; although SS:ESP have already been changed,
-	; they must be in the IRET frame after changing PL
-	push dword [.reg_sp]
+	; prepare IRET frame
 	push dword [.seg_ss]
-.fin:
+	push dword [.reg_sp]
+	push dword [.reg_flags]
+	push dword [.seg_cs]
+	push dword [.reg_ip]
 	iret
 .ring_switch:				dd 0
 .reg_ip:					dd 0
@@ -173,4 +185,12 @@ sw_int_global_handler_stub:
 .seg_ds:					dd 0
 .reg_cr3:					dd 0
 .tmp:						dd 0
+
+ALIGN(0x08)
+.iret_frame_new_pl:
+	.ip:					dd 0
+	.cs:					dd 0
+	.flags:					dd 0
+	.sp:					dd 0
+	.ss:					dd 0
 int_index:					dd 0

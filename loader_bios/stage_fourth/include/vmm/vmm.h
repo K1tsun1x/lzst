@@ -38,4 +38,9 @@ bool vmm_free_memory(paging_pde_t* directory, uintptr_t virt_address);
 bool vmm_copy_memory_to(const paging_pde_t* dst_directory, uintptr_t dst_address, const void* src, size_t count);
 bool vmm_copy_memory_from(const paging_pde_t* src_directory, void* dst, uintptr_t src_address, size_t count);
 
+/**
+ * @return `SIZE_MAX` on error
+ */
+size_t vmm_get_far_ansi_str_len(const paging_pde_t* src_directory, uintptr_t str_address, size_t max);
+
 #endif

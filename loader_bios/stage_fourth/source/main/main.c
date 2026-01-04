@@ -1,15 +1,145 @@
 #include <main/main.h>
 
-const uint8_t ALIGNED(0x1000) task1_code[VMM_PAGE_SIZE] = {
-	0xB8, 0x00, 0x00, 0x00, 0x00, 0xB1, '-', 0xCD, 0x41, 0x90, 0x90, 0xEB, 0xF3
-};
+XTRN_C uint32_t test_task1[];
+XTRN_C uint32_t test_task2[];
 
-const uint8_t ALIGNED(0x1000) task2_code[VMM_PAGE_SIZE] = {
-	0xB8, 0x00, 0x00, 0x00, 0x00, 0xB1, '+', 0xCD, 0x41, 0x90, 0x90, 0xEB, 0xF3
-};
+void map_simple_task(
+	paging_pde_t* task_dir,
+
+	uintptr_t kernel_base,
+	size_t kernel_size,
+
+	uintptr_t kernel_stack_bottom,
+	size_t kernel_stack_size,
+
+	uintptr_t task_phys_addr,
+	uintptr_t task_virt_addr,
+	size_t task_size
+	
+	// , uintptr_t task_stack_bottom_phys_addr,
+	// uintptr_t task_stack_bottom_virt_addr,
+	// size_t task_stack_size
+) {
+	// map page directory
+
+	if (!paging_map_pages(
+		task_dir,
+		(uintptr_t)task_dir, 0,
+		ALIGN_UP_P2(PAGING_DIRECTORY_SIZE, VMM_PAGE_SIZE) / VMM_PAGE_SIZE,
+		PAGING_PDE_FLAG_PRESENT | PAGING_PDE_FLAG_READ_WRITE | PAGING_PDE_FLAG_USER_SUPERVISOR
+	)) {
+		tty_prints_negative("Error: failed to map page dir for task!\n");
+		panic_halt();
+	}
+
+	// map kernel
+
+	if (!paging_map_pages(
+		task_dir,
+		kernel_base,
+		kernel_base,
+		ALIGN_UP_P2(kernel_size, VMM_PAGE_SIZE) / VMM_PAGE_SIZE,
+		PAGING_PDE_FLAG_PRESENT | PAGING_PDE_FLAG_READ_WRITE | PAGING_PDE_FLAG_USER_SUPERVISOR
+	)) {
+		tty_prints_negative("Error: failed to map kernel for task!\n");
+		panic_halt();
+	}
+
+	// map kernel stack
+
+	if (!paging_map_pages(
+		task_dir,
+		kernel_stack_bottom,
+		kernel_stack_bottom,
+		ALIGN_UP_P2(kernel_stack_size, VMM_PAGE_SIZE) / VMM_PAGE_SIZE,
+		PAGING_PDE_FLAG_PRESENT | PAGING_PDE_FLAG_READ_WRITE | PAGING_PDE_FLAG_USER_SUPERVISOR
+	)) {
+		tty_prints_negative("Error: failed to map kernel stack for task!\n");
+		panic_halt();
+	}
+
+	// map task code sections
+
+	if (!paging_map_pages(
+		task_dir,
+		task_phys_addr,
+		task_virt_addr,
+		ALIGN_UP_P2(task_size, VMM_PAGE_SIZE) / VMM_PAGE_SIZE,
+		PAGING_PDE_FLAG_PRESENT | PAGING_PDE_FLAG_READ_WRITE | PAGING_PDE_FLAG_USER_SUPERVISOR
+	)) {
+		tty_prints_negative("Error: failed to map code section for task!\n");
+		panic_halt();
+	}
+
+	// map stack
+
+	/*
+	if (!paging_map_pages(
+		task_dir,
+		task_stack_bottom_phys_addr,
+		task_stack_bottom_virt_addr,
+		ALIGN_UP_P2(task_stack_size, VMM_PAGE_SIZE) / VMM_PAGE_SIZE,
+		PAGING_PDE_FLAG_PRESENT | PAGING_PDE_FLAG_READ_WRITE
+	)) {
+		tty_prints_negative("Error: failed to map stack for task!\n");
+		panic_halt();
+	}
+	*/
+}
 
 void stage_fourth_startup(boot_info_t* bootloader_info) {
+	// NULL
+	gdt_init32(&GDT[0], 0, 0, 0, 0);
+
+	// kernel code
+	gdt_init32(
+		&GDT[1],
+		0xfffff, 0,
+		GDT_ACCESS_READABLE_WRITEABLE | GDT_ACCESS_EXECUTABLE | GDT_ACCESS_NOT_SYSTEM | GDT_ACCESS_PRESENT,
+		GDT_FLAG_SIZE | GDT_FLAG_GRANULARITY
+	);
+
+	// kernel data
+	gdt_init32(
+		&GDT[2],
+		0xfffff, 0,
+		GDT_ACCESS_READABLE_WRITEABLE | GDT_ACCESS_NOT_SYSTEM | GDT_ACCESS_PRESENT,
+		GDT_FLAG_SIZE | GDT_FLAG_GRANULARITY
+	);
+
+	// user code
+	gdt_init32(
+		&GDT[3],
+		0xfffff, 0,
+		GDT_ACCESS_READABLE_WRITEABLE | GDT_ACCESS_EXECUTABLE | GDT_ACCESS_NOT_SYSTEM | GDT_ACCESS_DPL0 | GDT_ACCESS_DPL1 | GDT_ACCESS_PRESENT,
+		GDT_FLAG_SIZE | GDT_FLAG_GRANULARITY
+	);
+
+	// user data
+	gdt_init32(
+		&GDT[4],
+		0xfffff, 0,
+		GDT_ACCESS_READABLE_WRITEABLE | GDT_ACCESS_NOT_SYSTEM | GDT_ACCESS_DPL0 | GDT_ACCESS_DPL1 | GDT_ACCESS_PRESENT,
+		GDT_FLAG_SIZE | GDT_FLAG_GRANULARITY
+	);
+
+	// TSS
+	gdt_init32(
+		&GDT[5],
+		sizeof(TSS) - 1, (uintptr_t)&TSS,
+		0x89,
+		0
+	);
+
+	GDTR.offset = (uintptr_t)&GDT[0];
+	GDTR.size = sizeof(GDT) - 1;
+
 	gdtr_load(&GDTR);
+
+	TSS.esp0 = 0x6000;
+	TSS.ss0 = 0x10;
+	TSS.iopb = sizeof(TSS);
+	__asm__ __volatile__("ltr %%ax"::"a"(0x28));
 
 	exceptions_init();
 	irqs_init();
@@ -347,9 +477,6 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 
 	tty_prints_positive("[ENABLED]\n");
 
-	const uintptr_t task1_base = 0x400000;
-	const uintptr_t task2_base = 0x400000;
-
 	paging_pde_t* task1_dir = (paging_pde_t*)pmm_allocate_memory(PAGING_DIRECTORY_SIZE, PMM_MEM_FLAG_ZEROED);
 	paging_pde_t* task2_dir = (paging_pde_t*)pmm_allocate_memory(PAGING_DIRECTORY_SIZE, PMM_MEM_FLAG_ZEROED);
 	if (!task1_dir || !task2_dir) {
@@ -357,122 +484,26 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		panic_halt();
 	}
 
-	tty_printf("T1 DIR: %#010x\n", task1_dir);
-	tty_printf("T2 DIR: %#010x\n", task2_dir);
-
-	// map page dirs
-
-	if (!paging_map_pages(
-		task1_dir,
-		(uintptr_t)task1_dir, 0,
-		ALIGN_UP_P2(PAGING_DIRECTORY_SIZE, VMM_PAGE_SIZE) / VMM_PAGE_SIZE,
-		PAGING_PDE_FLAG_PRESENT | PAGING_PDE_FLAG_READ_WRITE
-	)) {
-		tty_prints_negative("Error: failed to map page dir for task1!\n");
-		panic_halt();
-	}
-
-	if (!paging_map_pages(
-		task2_dir,
-		(uintptr_t)task2_dir, 0,
-		ALIGN_UP_P2(PAGING_DIRECTORY_SIZE, VMM_PAGE_SIZE) / VMM_PAGE_SIZE,
-		PAGING_PDE_FLAG_PRESENT | PAGING_PDE_FLAG_READ_WRITE
-	)) {
-		tty_prints_negative("Error: failed to map page dir for task2!\n");
-		panic_halt();
-	}
-
-	// map kernel
-
-	if (!paging_map_pages(
-		task1_dir,
-		kernel_base,
-		kernel_base,
-		ALIGN_UP_P2(kernel_size, VMM_PAGE_SIZE) / VMM_PAGE_SIZE,
-		PAGING_PDE_FLAG_PRESENT | PAGING_PDE_FLAG_READ_WRITE
-	)) {
-		tty_prints_negative("Error: failed to map kernel for task1!\n");
-		panic_halt();
-	}
-
-	if (!paging_map_pages(
-		task2_dir,
-		kernel_base,
-		kernel_base,
-		ALIGN_UP_P2(kernel_size, VMM_PAGE_SIZE) / VMM_PAGE_SIZE,
-		PAGING_PDE_FLAG_PRESENT | PAGING_PDE_FLAG_READ_WRITE
-	)) {
-		tty_prints_negative("Error: failed to map kernel for task2!\n");
-		panic_halt();
-	}
-
-	// map task code sections
-
-	tty_printf("T1C: %#010x\n", (uintptr_t)task1_code);
-	tty_printf("T2C: %#010x\n", (uintptr_t)task2_code);
-
-	if (!paging_map_pages(
-		task1_dir,
-		(uintptr_t)&task1_code[0],
-		task1_base,
-		1,					// only first page for test!!!
-		PAGING_PDE_FLAG_PRESENT | PAGING_PDE_FLAG_READ_WRITE
-	)) {
-		tty_prints_negative("Error: failed to map code section for task1!\n");
-		panic_halt();
-	}
-
-	if (!paging_map_pages(
-		task2_dir,
-		(uintptr_t)&task2_code[0],
-		task2_base,
-		1,					// only first page for test!!!
-		PAGING_PDE_FLAG_PRESENT | PAGING_PDE_FLAG_READ_WRITE
-	)) {
-		tty_prints_negative("Error: failed to map code section for task2!\n");
-		panic_halt();
-	}
+	const uintptr_t tt1 = (uintptr_t)&test_task1;
+	const uintptr_t tt2 = (uintptr_t)&test_task2;
+	map_simple_task(task1_dir, kernel_base, kernel_size, 0x4000, 0x2000, tt1, 0x400000, 0x1000);
+	map_simple_task(task2_dir, kernel_base, kernel_size, 0x4000, 0x2000, tt2, 0x400000, 0x1000);
 
 	// map stack
 
 	const uintptr_t task1_stack_btm = vmm_allocate_memory(
 		task1_dir,
 		VMM_PAGE_SIZE * 2,
-		PAGING_PTE_FLAG_PRESENT | PAGING_PTE_FLAG_READ_WRITE,
+		PAGING_PTE_FLAG_PRESENT | PAGING_PTE_FLAG_READ_WRITE | PAGING_PDE_FLAG_USER_SUPERVISOR,
 		0
 	);
 
 	const uintptr_t task2_stack_btm = vmm_allocate_memory(
 		task2_dir,
 		VMM_PAGE_SIZE * 2,
-		PAGING_PTE_FLAG_PRESENT | PAGING_PTE_FLAG_READ_WRITE,
+		PAGING_PTE_FLAG_PRESENT | PAGING_PTE_FLAG_READ_WRITE | PAGING_PDE_FLAG_USER_SUPERVISOR,
 		0
 	);
-
-	// FIXME: well, obviously, not good decision, but idk how to change that
-	// map LAPIC regs
-	const uintptr_t lapic_base = (uintptr_t)lapic_get_base();
-	if (!paging_map_pages(
-		task1_dir,
-		lapic_base,
-		lapic_base,
-		1,
-		PAGING_PTE_FLAG_PRESENT | PAGING_PTE_FLAG_READ_WRITE)
-	) {
-		tty_prints_negative("Error: failed to map LAPIC regs for task1!\n");
-		panic_halt();
-	}
-	
-	if (!paging_map_pages(
-		task2_dir,
-		lapic_base,
-		lapic_base,
-		1,
-		PAGING_PTE_FLAG_PRESENT | PAGING_PTE_FLAG_READ_WRITE)
-	) {
-		tty_prints_negative("Error: failed to map LAPIC regs for task2!\n");
-		panic_halt();
-	}
 
 	if (task1_stack_btm == UINTPTR_MAX) {
 		tty_prints_negative("Error: failed to allocate stack for task1!\n");
@@ -487,15 +518,12 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 	const uintptr_t task1_stack_top = task1_stack_btm + VMM_PAGE_SIZE * 2;
 	const uintptr_t task2_stack_top = task2_stack_btm + VMM_PAGE_SIZE * 2;
 
-	scheduler_task_def_regs_t task1_def_regs = SCHEDULER_STATIC_DEFAULT_TASK_DEF_REGS(
-		(uint32_t)task1_dir,
-		task1_stack_top,
-		task1_base
+	scheduler_task_def_regs_t task1_def_regs = SCHEDULER_STATIC_TASK_DEF_REGS(
+		(uint32_t)task1_dir, 0x23, 0x23, task1_stack_top, 0x400000, 0x1b, 0x202
 	);
-	scheduler_task_def_regs_t task2_def_regs = SCHEDULER_STATIC_DEFAULT_TASK_DEF_REGS(
-		(uint32_t)task2_dir,
-		task2_stack_top,
-		task2_base
+
+	scheduler_task_def_regs_t task2_def_regs = SCHEDULER_STATIC_TASK_DEF_REGS(
+		(uint32_t)task2_dir, 0x23, 0x23, task2_stack_top, 0x400000, 0x1b, 0x202
 	);
 
 	scheduler_task_t t1;
@@ -534,9 +562,6 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 		panic_halt();
 	}
 
-	tty_printf("T1: %#010x/%#010x\n", (uintptr_t)task1_base, (uintptr_t)t1.default_regs.ip);
-	tty_printf("T2: %#010x/%#010x\n", (uintptr_t)task2_base, (uintptr_t)t2.default_regs.ip);
-
 	scheduler_enable_task_switching();
 	
 	tty_prints_positive("3 seconds...\n");
@@ -549,25 +574,9 @@ void stage_fourth_startup(boot_info_t* bootloader_info) {
 	panic_halt();
 }
 
-gdt32_t ALIGNED(16) GDT[3] = {
-	GDT32_STATIC(0, 0, 0, 0),
-	GDT32_STATIC(
-		0xfffff,
-		0,
-		GDT_ACCESS_READABLE_WRITEABLE | GDT_ACCESS_EXECUTABLE | GDT_ACCESS_NOT_SYSTEM | GDT_ACCESS_PRESENT,
-		GDT_FLAG_SIZE | GDT_FLAG_GRANULARITY
-	),
-	GDT32_STATIC(
-		0xfffff,
-		0,
-		GDT_ACCESS_READABLE_WRITEABLE | GDT_ACCESS_NOT_SYSTEM | GDT_ACCESS_PRESENT,
-		GDT_FLAG_SIZE | GDT_FLAG_GRANULARITY
-	)
-};
-
-gdtr32_t ALIGNED(16) GDTR = GDTR_STATIC(
-	sizeof(GDT),
-	(uintptr_t)&GDT[0]
-);
+gdt32_t ALIGNED(16) GDT[6];
+gdtr32_t ALIGNED(16) GDTR;
 
 paging_pde_t ALIGNED(0x1000) PDE[PAGING_NUM_DIRECTORY_ENTRIES] = { 0 };
+
+tss_t ALIGNED(0x08) TSS;

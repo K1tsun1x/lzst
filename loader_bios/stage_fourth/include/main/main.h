@@ -24,6 +24,7 @@
 #include <lapic/lapic.h>
 #include <ioapic/ioapic.h>
 #include <dynarr/dynarr.h>
+#include <tss/tss.h>
 
 #define TIMER_TICK_MS				1
 
@@ -32,9 +33,10 @@ extern uint32_t __PTR_END__[];
 
 extern gfx_video_mode_t GFX_VIDEO_MODE;
 
-extern gdt32_t ALIGNED(16) GDT[3];
+extern gdt32_t ALIGNED(16) GDT[6];
 extern gdtr32_t ALIGNED(16) GDTR;
 
 extern paging_pde_t ALIGNED(0x1000) PDE[PAGING_NUM_DIRECTORY_ENTRIES];
+extern tss_t ALIGNED(0x08) TSS;
 
 #endif
